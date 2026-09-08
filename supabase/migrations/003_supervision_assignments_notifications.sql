@@ -1,0 +1,22 @@
+-- Já aplicada manualmente no Supabase. Mantida no repositório como fonte de verdade.
+begin;
+create table public.vortex_report_assignments (id uuid primary key default gen_random_uuid(), report_id uuid not null references public.vortex_reports(id) on delete cascade, assigned_to uuid not null references public.vortex_profiles(id) on delete restrict, assigned_by uuid references public.vortex_profiles(id) on delete set null, assigned_at timestamptz not null default now(), ended_at timestamptz, note text, created_at timestamptz not null default now());
+create unique index vortex_report_assignments_one_active_idx on public.vortex_report_assignments(report_id) where ended_at is null;
+create table public.vortex_supervisor_rules (id uuid primary key default gen_random_uuid(), supervisor_id uuid not null references public.vortex_profiles(id) on delete cascade, category_id uuid references public.vortex_categories(id) on delete cascade, neighborhood text, priority integer not null default 100, active boolean not null default true, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+create table public.vortex_notifications (id uuid primary key default gen_random_uuid(), report_id uuid references public.vortex_reports(id) on delete cascade, recipient_id uuid not null references public.vortex_profiles(id) on delete cascade, notification_type text not null, channel text not null default 'EMAIL', status text not null default 'PENDING', sent_at timestamptz, error_message text, created_at timestamptz not null default now());
+create index vortex_report_assignments_assigned_to_idx on public.vortex_report_assignments(assigned_to) where ended_at is null;
+create index vortex_notifications_recipient_idx on public.vortex_notifications(recipient_id, created_at desc);
+create function public.vortex_is_coordinator() returns boolean language sql stable security definer set search_path = pg_catalog, pg_temp as $$ select exists(select 1 from public.vortex_profiles where id=auth.uid() and active and role='COORDENADOR') $$;
+create function public.vortex_can_manage_assignments() returns boolean language sql stable security definer set search_path = pg_catalog, pg_temp as $$ select public.vortex_is_admin() or public.vortex_is_coordinator() $$;
+create function public.vortex_touch_supervisor_rule() returns trigger language plpgsql set search_path = pg_catalog, pg_temp as $$ begin new.updated_at=now(); return new; end; $$;
+create trigger vortex_supervisor_rules_touch before update on public.vortex_supervisor_rules for each row execute function public.vortex_touch_supervisor_rule();
+alter table public.vortex_report_assignments enable row level security; alter table public.vortex_supervisor_rules enable row level security; alter table public.vortex_notifications enable row level security;
+revoke all on public.vortex_report_assignments, public.vortex_supervisor_rules, public.vortex_notifications from anon, authenticated;
+grant select, insert, update on public.vortex_report_assignments to authenticated; grant select on public.vortex_supervisor_rules, public.vortex_notifications to authenticated;
+create policy "Assignments visible with report" on public.vortex_report_assignments for select to authenticated using (public.vortex_can_view_report(report_id));
+create policy "Managers manage assignments" on public.vortex_report_assignments for insert to authenticated with check (public.vortex_can_manage_assignments());
+create policy "Managers update assignments" on public.vortex_report_assignments for update to authenticated using (public.vortex_can_manage_assignments()) with check (public.vortex_can_manage_assignments());
+create policy "Admins manage supervisor rules" on public.vortex_supervisor_rules for all to authenticated using (public.vortex_is_admin()) with check (public.vortex_is_admin());
+create policy "Recipients view notifications" on public.vortex_notifications for select to authenticated using (recipient_id=auth.uid() or public.vortex_is_admin());
+revoke execute on function public.vortex_is_coordinator(), public.vortex_can_manage_assignments(), public.vortex_touch_supervisor_rule() from public, anon, authenticated;
+commit;
