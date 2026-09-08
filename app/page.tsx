@@ -1,69 +1,40 @@
-import Image from "next/image";
+import Link from "next/link";
+import type { ReactNode } from "react";
+import { BrandMark } from "./components/brand-mark";
+import { ArrowRight, Car, Clock, FileText, Lock, MapPin, People, Shield } from "./components/icons";
+
+const categories = [
+  { icon: <Shield />, title: "Segurança urbana", text: "Fatos que demandam atenção preventiva ou apoio da Guarda Municipal." },
+  { icon: <MapPin />, title: "Espaço público", text: "Situações em praças, vias, parques e demais áreas de convivência." },
+  { icon: <Car />, title: "Patrimônio municipal", text: "Informações sobre bens, equipamentos ou prédios públicos." },
+  { icon: <People />, title: "Ordem e convivência", text: "Ocorrências que impactem a tranquilidade e o bem-estar coletivo." },
+];
+
+const faqs = [
+  ["Posso enviar uma denúncia sem me identificar?", "Sim. O VÓRTEX permite o envio anônimo. Você decide quais dados deseja compartilhar."],
+  ["Como acompanho uma informação enviada?", "Ao concluir o envio, você receberá um protocolo e um código de acompanhamento para consultar o andamento."],
+  ["O VÓRTEX substitui o atendimento de emergência?", "Não. Em situação de risco imediato, procure os canais de emergência competentes."],
+];
 
 export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+  return <main className="overflow-hidden bg-[#f4f7f8] text-[#102b42]">
+    <header className="bg-[#092940] text-white"><div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-10"><BrandMark /><nav aria-label="Navegação principal" className="hidden items-center gap-7 text-sm text-slate-200 md:flex"><a href="#como-funciona" className="transition hover:text-white">Como funciona</a><a href="#categorias" className="transition hover:text-white">Categorias</a><a href="#seguranca" className="transition hover:text-white">Segurança</a></nav><Link href="/acompanhar" className="rounded-lg border border-white/30 px-3.5 py-2 text-sm font-semibold transition hover:border-white hover:bg-white/10 sm:px-4">Acompanhar</Link></div></header>
+
+    <section className="relative isolate bg-[#092940] text-white"><div className="absolute inset-0 -z-10 opacity-50 [background-image:radial-gradient(circle_at_85%_20%,#13887d_0,transparent_27%),radial-gradient(circle_at_90%_80%,#0a415d_0,transparent_35%)]" /><div className="mx-auto grid max-w-7xl gap-12 px-5 pb-20 pt-16 sm:px-8 sm:pb-24 sm:pt-20 lg:grid-cols-[1.15fr_.85fr] lg:px-10 lg:pb-28 lg:pt-24"><div className="max-w-2xl"><p className="mb-5 inline-flex items-center gap-2 rounded-full border border-teal-300/25 bg-teal-300/10 px-3 py-1.5 text-xs font-semibold tracking-wide text-teal-100"><span className="size-1.5 rounded-full bg-[#e8b74e]" /> SERVIÇO DIGITAL DA GCMJP</p><h1 className="text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">Sua informação ajuda a cuidar de João Pessoa.</h1><p className="mt-6 max-w-xl text-base leading-7 text-slate-200 sm:text-lg">Um canal seguro e acessível para compartilhar denúncias e informações com a Guarda Civil Municipal de João Pessoa.</p><div className="mt-9 flex flex-col gap-3 sm:flex-row"><Link href="/denuncia" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#e8b74e] px-5 text-sm font-bold text-[#172d3e] transition hover:bg-[#f1c663]">Fazer uma denúncia <ArrowRight /></Link><Link href="/acompanhar" className="inline-flex min-h-12 items-center justify-center rounded-lg border border-white/35 px-5 text-sm font-semibold transition hover:border-white hover:bg-white/10">Acompanhar denúncia</Link></div></div><div className="self-end rounded-2xl border border-white/10 bg-white/[0.07] p-5 backdrop-blur-sm sm:p-6 lg:ml-auto lg:max-w-sm"><Shield /><p className="mt-7 text-sm font-semibold text-teal-100">CANAL SEGURO</p><p className="mt-2 text-xl font-semibold leading-7">Você pode relatar sem se identificar.</p><p className="mt-3 text-sm leading-6 text-slate-300">O envio anônimo é uma escolha sua. As informações são tratadas com responsabilidade.</p></div></div></section>
+
+    <section id="como-funciona" className="mx-auto max-w-7xl px-5 py-18 sm:px-8 sm:py-24 lg:px-10"><div className="max-w-xl"><p className="text-xs font-bold tracking-[0.16em] text-[#0c766d]">COMO FUNCIONA</p><h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Direto, seguro e transparente.</h2></div><div className="mt-12 grid gap-7 md:grid-cols-3">{[{ n: "01", icon: <FileText />, title: "Informe", text: "Descreva o que aconteceu e, se puder, indique local, data e horário." }, { n: "02", icon: <Shield />, title: "Envie com segurança", text: "Escolha se deseja se identificar. O envio é feito por um canal protegido." }, { n: "03", icon: <Clock />, title: "Acompanhe", text: "Use seu protocolo para consultar atualizações e mensagens permitidas." }].map((item) => <article key={item.n} className="border-t border-slate-300 pt-5"><div className="flex items-start justify-between text-[#0c766d]">{item.icon}<span className="text-sm font-bold text-slate-400">{item.n}</span></div><h3 className="mt-8 text-xl font-bold">{item.title}</h3><p className="mt-3 max-w-xs text-sm leading-6 text-slate-600">{item.text}</p></article>)}</div></section>
+
+    <section id="categorias" className="bg-white"><div className="mx-auto max-w-7xl px-5 py-18 sm:px-8 sm:py-24 lg:px-10"><div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div className="max-w-xl"><p className="text-xs font-bold tracking-[0.16em] text-[#0c766d]">TEMAS QUE VOCÊ PODE INFORMAR</p><h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Uma cidade mais segura começa com atenção.</h2></div><p className="max-w-sm text-sm leading-6 text-slate-600">Seu relato auxilia a GCMJP a conhecer melhor as situações que afetam a cidade.</p></div><div className="mt-11 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{categories.map((category) => <article key={category.title} className="rounded-xl border border-slate-200 p-5 transition hover:-translate-y-0.5 hover:border-teal-700/30 hover:shadow-md"><div className="text-[#0c766d]">{category.icon}</div><h3 className="mt-6 font-bold">{category.title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{category.text}</p></article>)}</div></div></section>
+
+    <section id="seguranca" className="bg-[#d8f1ed]"><div className="mx-auto grid max-w-7xl gap-10 px-5 py-18 sm:px-8 sm:py-24 lg:grid-cols-2 lg:gap-20 lg:px-10"><div><p className="text-xs font-bold tracking-[0.16em] text-[#0c766d]">PRIVACIDADE E SEGURANÇA</p><h2 className="mt-3 max-w-lg text-3xl font-bold tracking-tight sm:text-4xl">A sua segurança também faz parte do serviço.</h2><p className="mt-5 max-w-lg leading-7 text-slate-700">O VÓRTEX foi pensado para acolher informações com clareza e respeito. Você pode optar pelo anonimato e acompanhar seu relato sem expor dados pessoais.</p></div><div className="grid gap-4"><InfoCard icon={<Lock />} title="Escolha de identificação" text="O envio anônimo está disponível para você decidir como participar." /><InfoCard icon={<Shield />} title="Tratamento responsável" text="As informações são destinadas ao encaminhamento adequado pela GCMJP." /></div></div></section>
+
+    <section id="acompanhar" className="mx-auto max-w-7xl px-5 py-18 sm:px-8 sm:py-24 lg:px-10"><div className="rounded-2xl bg-[#092940] px-6 py-10 text-white sm:px-10 sm:py-12"><div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center"><div><p className="text-xs font-bold tracking-[0.16em] text-teal-200">JÁ FEZ UM ENVIO?</p><h2 className="mt-3 text-3xl font-bold tracking-tight">Acompanhe sua denúncia.</h2><p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">Em breve, consulte o status usando o protocolo e o código de acompanhamento recebidos após o registro.</p></div><button type="button" disabled className="min-h-12 rounded-lg bg-white/10 px-5 text-sm font-semibold text-slate-300 ring-1 ring-white/20" title="Consulta disponível em breve">Consulta em breve</button></div></div></section>
+
+    <section className="bg-white"><div className="mx-auto max-w-3xl px-5 py-18 sm:px-8 sm:py-24"><p className="text-center text-xs font-bold tracking-[0.16em] text-[#0c766d]">DÚVIDAS FREQUENTES</p><h2 className="mt-3 text-center text-3xl font-bold tracking-tight sm:text-4xl">Perguntas e respostas</h2><div className="mt-10 divide-y divide-slate-200 border-y border-slate-200">{faqs.map(([question, answer]) => <details key={question} className="group py-5"><summary className="flex cursor-pointer list-none items-center justify-between gap-5 font-semibold marker:content-none">{question}<span className="text-xl font-normal text-[#0c766d] transition group-open:rotate-45">+</span></summary><p className="max-w-2xl pt-3 text-sm leading-6 text-slate-600">{answer}</p></details>)}</div></div></section>
+    <footer className="bg-[#061c2d] text-slate-300"><div className="mx-auto flex max-w-7xl flex-col gap-8 px-5 py-10 sm:px-8 md:flex-row md:items-end md:justify-between lg:px-10"><div><BrandMark /><p className="mt-5 max-w-sm text-sm leading-6 text-slate-400">Canal Seguro da Guarda Civil Municipal de João Pessoa.</p></div><div className="text-sm leading-6 md:text-right"><p className="font-semibold text-white">Guarda Civil Municipal de João Pessoa</p><p>Prefeitura de João Pessoa</p><p className="mt-3 text-slate-500">© {new Date().getFullYear()} VÓRTEX. Todos os direitos reservados.</p></div></div></footer>
+  </main>;
+}
+
+function InfoCard({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+  return <div className="rounded-xl bg-white p-5 shadow-sm"><div className="flex gap-4"><span className="grid size-10 shrink-0 place-items-center rounded-lg bg-[#092940] text-white">{icon}</span><div><h3 className="font-bold">{title}</h3><p className="mt-1 text-sm leading-6 text-slate-600">{text}</p></div></div></div>;
 }
