@@ -26,13 +26,13 @@ export async function POST(request: Request) {
         const { data, error } = await admin.rpc("vortex_get_pending_public_attachment", { p_upload_token: body.uploadToken, p_attachment_token: body.attachmentToken });
         const pending = data?.[0] as { storage_path?: string; mime_type?: string; size_bytes?: number } | undefined;
         if (error || !pending?.storage_path || pending.mime_type !== file.value.mimeType || pending.size_bytes !== file.value.size) return NextResponse.json({ error: authorizationError(error?.code) }, { status: 403 });
-        const uploadUrl = await createUploadUrl(pending.storage_path, file.value.mimeType, file.value.size);
+        const uploadUrl = await createUploadUrl(pending.storage_path, file.value.mimeType);
         return NextResponse.json({ uploadUrl, attachmentToken: body.attachmentToken, expiresIn: storageUrlExpiry.upload });
       }
       const { data, error } = await admin.rpc("vortex_reserve_public_attachment_upload", { p_upload_token: body.uploadToken, p_original_name: file.value.fileName, p_mime_type: file.value.mimeType, p_file_size: file.value.size });
       const reservation = data?.[0] as { storage_path?: string; attachment_token?: string } | undefined;
       if (error || !reservation?.storage_path || !reservation.attachment_token) return NextResponse.json({ error: authorizationError(error?.code) }, { status: 403 });
-      const uploadUrl = await createUploadUrl(reservation.storage_path, file.value.mimeType, file.value.size);
+      const uploadUrl = await createUploadUrl(reservation.storage_path, file.value.mimeType);
       return NextResponse.json({ uploadUrl, attachmentToken: reservation.attachment_token, expiresIn: storageUrlExpiry.upload });
     } catch { return NextResponse.json({ error: "O armazenamento de anexos está indisponível no momento." }, { status: 503 }); }
   }
@@ -43,5 +43,5 @@ export async function POST(request: Request) {
   if (countError) return NextResponse.json({ error: "Não foi possível validar os anexos existentes." }, { status: 500 });
   if ((count || 0) >= maximumAttachmentsPerReport) return NextResponse.json({ error: "Esta denúncia já possui o limite de 5 anexos." }, { status: 400 });
   const storagePath = newStoragePath(body.reportId, file.value.mimeType);
-  try { const uploadUrl = await createUploadUrl(storagePath, file.value.mimeType, file.value.size); return NextResponse.json({ uploadUrl, storagePath, expiresIn: storageUrlExpiry.upload }); } catch { return NextResponse.json({ error: "Não foi possível preparar o envio do anexo." }, { status: 503 }); }
+  try { const uploadUrl = await createUploadUrl(storagePath, file.value.mimeType); return NextResponse.json({ uploadUrl, storagePath, expiresIn: storageUrlExpiry.upload }); } catch { return NextResponse.json({ error: "Não foi possível preparar o envio do anexo." }, { status: 503 }); }
 }

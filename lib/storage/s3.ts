@@ -28,12 +28,14 @@ export function createS3Client() {
     endpoint: endpoint(),
     region: required("S3_REGION"),
     forcePathStyle: forcePathStyle(),
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
     credentials: { accessKeyId: required("S3_ACCESS_KEY"), secretAccessKey: required("S3_SECRET_KEY") },
   });
 }
 
-export async function createUploadUrl(storagePath: string, mimeType: string, size: number) {
-  return getSignedUrl(createS3Client(), new PutObjectCommand({ Bucket: s3Bucket(), Key: storagePath, ContentType: mimeType, ContentLength: size }), { expiresIn: uploadExpiresIn });
+export async function createUploadUrl(storagePath: string, mimeType: string) {
+  return getSignedUrl(createS3Client(), new PutObjectCommand({ Bucket: s3Bucket(), Key: storagePath, ContentType: mimeType }), { expiresIn: uploadExpiresIn });
 }
 
 export async function createDownloadUrl(storagePath: string) {
