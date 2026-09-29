@@ -22,6 +22,15 @@ set
   allowed_mime_types = excluded.allowed_mime_types,
   updated_at = now();
 
+delete from public.vortex_pending_attachments pa
+using public.vortex_upload_sessions s
+where s.id = pa.upload_session_id
+  and pa.status = 'PENDING'
+  and (
+    pa.expires_at <= now()
+    or s.expires_at <= now()
+  );
+
 alter table public.vortex_pending_attachments
   drop constraint if exists vortex_pending_attachments_mime_type_check;
 
