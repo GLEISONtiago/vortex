@@ -34,17 +34,17 @@ function authorizationError(code?: string) {
   return "Não foi possível autorizar o anexo.";
 }
 
-async function createSignedUpload(path: string) {
+async function createSignedUpload(path: string, upsert = false) {
   const admin = createAdminClient();
   const { data, error } = await admin.storage
     .from(attachmentBucket)
-    .createSignedUploadUrl(path, { upsert: false });
+    .createSignedUploadUrl(path, { upsert });
 
   if (error || !data?.path || !data.token) {
     throw new Error("signed-upload-unavailable");
   }
 
-  return { path: data.path, token: data.token };
+  return { path: data.path, token: data.token, upsert };
 }
 
 export async function POST(request: Request) {
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
           );
         }
 
-        const signed = await createSignedUpload(pending.storage_path);
+        const signed = await createSignedUpload(pending.storage_path, true);
 
         return NextResponse.json({
           ...signed,
