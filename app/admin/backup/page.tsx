@@ -11,6 +11,7 @@ type ReportRow = {
   protocol: string;
   status: string;
   created_at: string;
+  updated_at: string;
 };
 
 type AttachmentRow = {
@@ -81,7 +82,7 @@ export default async function BackupPage() {
     admin.rpc("vortex_get_storage_usage"),
     admin
       .from("vortex_reports")
-      .select("id, protocol, status, created_at")
+      .select("id, protocol, status, created_at, updated_at")
       .order("created_at", { ascending: false }),
     admin
       .from("vortex_attachments")
@@ -167,7 +168,7 @@ export default async function BackupPage() {
       if (
         report
         && report.status === "FINALIZADA"
-        && new Date(report.created_at).getTime() < cutoff
+        && new Date(report.updated_at).getTime() < cutoff
         && attachment.backed_up_at
         && !attachment.storage_deleted_at
       ) {
