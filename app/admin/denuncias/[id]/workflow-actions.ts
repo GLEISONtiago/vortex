@@ -44,11 +44,30 @@ export async function addInternalNote(reportId: string, note: string) {
   revalidatePath(`/admin/denuncias/${reportId}`); return { message: "Observação registrada no histórico." };
 }
 
-export async function sendReporterMessage(reportId: string, message: string) {
+export async function sendReporterMessage(reportId: string, message: string, waitForReply = false) {
   const clean = message.trim(); if (clean.length < 2) return { error: "Digite uma mensagem." };
   const ctx = await context(reportId); if ("error" in ctx) return { error: ctx.error };
   const { supabase } = ctx;
   const { error } = await supabase.rpc("vortex_send_staff_message", { p_report_id: reportId, p_message: clean });
   if (error) return { error: "Não foi possível enviar a mensagem." };
-  revalidatePath(`/admin/denuncias/${reportId}`); return { message: "Mensagem disponibilizada no acompanhamento da denúncia." };
+  if (waitForReply) {
+    const { error: waitingError } = await supabase.rpc("vortex_set_awaiting_reporter_info", { p_report_id: reportId, p_waiting: true });
+    if (waitingError) return { error: "A mensagem foi enviada, mas não foi possível marcar a denúncia como aguardando complemento." };
+  }
+  revalidatePath("/admin"); revalidatePath("/admin/denuncias"); revalidatePath(`/admin/denuncias/${reportId}`);
+  return { message: waitForReply ? "Mensagem enviada. A denúncia está aguardando complemento do denunciante." : "Mensagem disponibilizada no acompanhamento da denúncia." };
+}
+
+export async function finalizeReport(reportId:string,resolution:string,summary:string,message:string,forwardedAgency?:string){
+  if(!allowedResolutions.includes(resolution)) return {error:"Selecione um resultado válido."};
+  const cleanSummary=summary.trim(),cleanMessage=message.trim(),agency=(forwardedAgency||"").trim();
+  if(cleanSummary.length<10) return {error:"Informe um resumo do atendimento com pelo menos 10 caracteres."};
+  if(cleanMessage.length<2) return {error:"Informe a mensagem final ao denunciante."};
+  if(resolution==="ENCAMINHADA_OUTRO_ORGAO"&&!agency) return {error:"Informe o órgão de destino."};
+  const ctx=await context(reportId); if("error" in ctx)return{error:ctx.error};
+  const {supabase}=ctx;
+  const {error}=await supabase.rpc("vortex_finalize_report",{p_report_id:reportId,p_resolution:resolution,p_summary:cleanSummary,p_message:cleanMessage,p_forwarded_agency:agency||null});
+  if(error)return{error:"Não foi possível finalizar a denúncia."};
+  revalidatePath("/admin");revalidatePath("/admin/denuncias");revalidatePath(`/admin/denuncias/${reportId}`);
+  return{message:"Denúncia finalizada e retorno enviado ao denunciante."};
 }
