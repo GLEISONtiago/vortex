@@ -3,15 +3,15 @@ import { createClient } from "../../../lib/supabase/server";
 import { statusLabel, urgencyLabel } from "../presentation";
 
 const PAGE_SIZE = 20;
-const STATUSES = ["NOVA","EM_ANALISE","ENCAMINHADA","EM_ATENDIMENTO","CONCLUIDA","IMPROCEDENTE"];
+const STATUSES = ["NOVA","EM_ANALISE","EM_ATENDIMENTO","FINALIZADA"];
 const URGENCIES = ["LOW","MEDIUM","HIGH"];
 
 function badgeClass(kind: "status" | "urgency", value: string) {
   if (kind === "urgency") return value === "HIGH" ? "bg-red-50 text-red-800 ring-red-200" : value === "MEDIUM" ? "bg-amber-50 text-amber-800 ring-amber-200" : "bg-slate-100 text-slate-700 ring-slate-200";
   if (value === "NOVA") return "bg-blue-50 text-blue-800 ring-blue-200";
-  if (value === "EM_ANALISE" || value === "ENCAMINHADA") return "bg-amber-50 text-amber-800 ring-amber-200";
+  if (value === "EM_ANALISE") return "bg-amber-50 text-amber-800 ring-amber-200";
   if (value === "EM_ATENDIMENTO") return "bg-teal-50 text-teal-800 ring-teal-200";
-  if (value === "CONCLUIDA") return "bg-emerald-50 text-emerald-800 ring-emerald-200";
+  if (value === "FINALIZADA") return "bg-emerald-50 text-emerald-800 ring-emerald-200";
   return "bg-slate-100 text-slate-700 ring-slate-200";
 }
 
