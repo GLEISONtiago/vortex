@@ -6,12 +6,12 @@ export function BrandMark({ compact = false }: BrandMarkProps) {
   return <div className="flex items-center gap-3">
     <span aria-hidden="true" className="grid h-12 w-11 shrink-0 place-items-center">
       <Image
-        src="/gcmjp-logo.png"
+        src="/gcmjp-logo-clean.svg"
         alt=""
         width={44}
         height={50}
         priority
-        className="h-12 w-auto object-cover drop-shadow-[0_2px_3px_rgba(0,0,0,.35)] [clip-path:polygon(50%_0%,96%_10%,100%_55%,93%_75%,78%_90%,50%_100%,22%_90%,7%_75%,0%_55%,4%_10%)]"
+        className="h-12 w-auto object-contain drop-shadow-[0_2px_3px_rgba(0,0,0,.35)]"
       />
     </span>
     {!compact && <span className="leading-none">
