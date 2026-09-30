@@ -5,6 +5,13 @@ const labels: Record<string,string> = {
   REPORT_CREATED:"Denúncia registrada",
   REPORT_ASSIGNED:"Denúncia atribuída",
   REPORT_REASSIGNED:"Denúncia redistribuída",
+  REPORT_ROUTED:"Grupamento alterado",
+  PROFILE_UPDATED:"Perfil pessoal atualizado",
+  UNIT_CREATED:"Grupamento criado",
+  UNIT_MEMBER_SAVED:"Vínculo de grupamento atualizado",
+  UNIT_MEMBER_REMOVED:"Vínculo de grupamento removido",
+  CATEGORY_ROUTE_SAVED:"Regra de triagem atualizada",
+  CATEGORY_ROUTE_REMOVED:"Regra de triagem removida",
   STATUS_CHANGED:"Status alterado",
   REPORT_FINALIZED:"Denúncia finalizada",
   INTERNAL_NOTE_ADDED:"Observação interna registrada",
@@ -23,6 +30,7 @@ function detail(action:string, metadata:Record<string,unknown>){
   const protocol=typeof metadata.protocol==="string"?metadata.protocol:null;
   if(action==="STATUS_CHANGED") return `${protocol??"Denúncia"}: ${metadata.old_status??"—"} → ${metadata.new_status??"—"}`;
   if(action==="REPORT_FINALIZED") return `${protocol??"Denúncia"}: finalizada · ${metadata.resolution??"resultado não informado"}`;
+  if(action==="REPORT_ROUTED") return `${protocol??"Denúncia"} · destino operacional alterado`;
   if(action==="REPORT_ASSIGNED"||action==="REPORT_REASSIGNED") return `${protocol??"Denúncia"} · responsável ${String(metadata.assigned_to??"—").slice(0,8)}…`;
   if(protocol) return protocol;
   if(typeof metadata.role==="string") return `Perfil: ${metadata.role}`;
