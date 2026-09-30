@@ -472,7 +472,7 @@ export function BackupClient({
     <section className="rounded-2xl border border-red-200 bg-red-50 p-5 sm:p-6">
       <h2 className="text-xl font-bold text-red-950">Limpeza segura</h2>
       <p className="mt-2 text-sm leading-6 text-red-900">
-        Somente imagens de denúncias finalizadas há mais de 90 dias e com backup
+        Somente imagens de denúncias finalizadas, sem alterações há mais de 90 dias e com backup
         confirmado podem ser removidas do Supabase.
       </p>
       <p className="mt-3 text-sm font-semibold text-red-950">
