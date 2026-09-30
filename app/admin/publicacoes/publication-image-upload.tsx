@@ -55,7 +55,7 @@ export function PublicationImageUpload({initialUrl="",initialPath=""}:{initialUr
     <input type="hidden" name="imagePath" value={path}/>
     <input type="hidden" name="imageUrl" value={url}/>
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-      {url?<img src={url} alt="Prévia da publicação" className="h-28 w-full rounded-lg object-cover sm:w-44"/>:<div className="grid h-28 w-full place-items-center rounded-lg bg-slate-200 text-xs font-semibold text-slate-500 sm:w-44">Sem imagem</div>}
+      {url?<div role="img" aria-label="Prévia da publicação" className="h-28 w-full rounded-lg bg-cover bg-center sm:w-44" style={{backgroundImage:`url("${url.replaceAll('"','%22')}")`}}/>:<div className="grid h-28 w-full place-items-center rounded-lg bg-slate-200 text-xs font-semibold text-slate-500 sm:w-44">Sem imagem</div>}
       <div className="flex-1">
         <p className="text-sm font-bold text-slate-700">Imagem da publicação</p>
         <p className="mt-1 text-xs leading-5 text-slate-500">Envie JPEG, PNG ou WebP. A imagem é otimizada automaticamente antes do envio.</p>
