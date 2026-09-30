@@ -6,11 +6,11 @@ import { compressImage } from "../../../lib/storage/compress-image";
 
 const bucket="vortex-public-updates";
 
-export function PublicationImageUpload({initialUrl="",initialPath=""}:{initialUrl?:string;initialPath?:string}){
+export function PublicationImageUpload({initialUrl="",initialPath="",initialX=50,initialY=50}:{initialUrl?:string;initialPath?:string;initialX?:number;initialY?:number}){
   const root=useRef<HTMLDivElement>(null);
   const [url,setUrl]=useState(initialUrl);
   const [path,setPath]=useState(initialPath);
-  const [busy,setBusy]=useState(false);
+  const [busy,setBusy]=useState(false);\n  const [x,setX]=useState(initialX); const [y,setY]=useState(initialY);
   const [message,setMessage]=useState("");
 
   function lockForm(locked:boolean){
@@ -53,9 +53,9 @@ export function PublicationImageUpload({initialUrl="",initialPath=""}:{initialUr
 
   return <div ref={root} className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
     <input type="hidden" name="imagePath" value={path}/>
-    <input type="hidden" name="imageUrl" value={url}/>
+    <input type="hidden" name="imageUrl" value={url}/><input type="hidden" name="imagePositionX" value={x}/><input type="hidden" name="imagePositionY" value={y}/>
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-      {url?<div role="img" aria-label="Prévia da publicação" className="h-28 w-full rounded-lg bg-cover bg-center sm:w-44" style={{backgroundImage:`url("${url.replaceAll('"','%22')}")`}}/>:<div className="grid h-28 w-full place-items-center rounded-lg bg-slate-200 text-xs font-semibold text-slate-500 sm:w-44">Sem imagem</div>}
+      {url?<div role="img" aria-label="Prévia da publicação" className="h-28 w-full rounded-lg bg-cover bg-center sm:w-44" style={{backgroundImage:`url("${url.replaceAll('"','%22')}")`,backgroundPosition:`${x}% ${y}%`}}/>:<div className="grid h-28 w-full place-items-center rounded-lg bg-slate-200 text-xs font-semibold text-slate-500 sm:w-44">Sem imagem</div>}
       <div className="flex-1">
         <p className="text-sm font-bold text-slate-700">Imagem da publicação</p>
         <p className="mt-1 text-xs leading-5 text-slate-500">Envie JPEG, PNG ou WebP. A imagem é otimizada automaticamente antes do envio.</p>
@@ -66,7 +66,7 @@ export function PublicationImageUpload({initialUrl="",initialPath=""}:{initialUr
           </label>
           {url&&<button type="button" disabled={busy} onClick={()=>void clear()} className="rounded-lg border border-slate-300 px-4 py-2.5 text-xs font-bold text-slate-700 disabled:opacity-50">Remover</button>}
         </div>
-        {message&&<p className="mt-2 text-xs text-slate-600">{message}</p>}
+        {url&&<div className="mt-3 grid gap-2"><p className="text-xs font-bold text-slate-600">Ajustar enquadramento</p><label className="text-xs text-slate-500">Horizontal<input type="range" min="0" max="100" value={x} onChange={e=>setX(Number(e.target.value))} className="ml-2 align-middle"/></label><label className="text-xs text-slate-500">Vertical<input type="range" min="0" max="100" value={y} onChange={e=>setY(Number(e.target.value))} className="ml-2 align-middle"/></label><p className="text-[11px] leading-4 text-slate-500">Arraste os controles para escolher qual parte da foto ficará centralizada nos cards e no destaque da matéria.</p></div>}{message&&<p className="mt-2 text-xs text-slate-600">{message}</p>}
       </div>
     </div>
   </div>;
