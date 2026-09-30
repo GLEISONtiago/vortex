@@ -128,7 +128,7 @@ export async function GET(request: Request) {
   const [{ data: history }, { data: messages }, { data: assignments }] = await Promise.all([
     admin
       .from("vortex_report_history")
-      .select("id, report_id, old_status, new_status, note, created_at")
+      .select("id, report_id, old_status, new_status, note, changed_by, created_at")
       .in("report_id", Array.from(selectedIds))
       .order("created_at", { ascending: true }),
     admin
