@@ -18,9 +18,9 @@ export const metadata: Metadata = {
     "Canal seguro para o envio de informações e denúncias à Guarda Civil Municipal de João Pessoa.",
   applicationName: "VÓRTEX GCMJP",
   icons: {
-    icon: [{ url: "/vortex-favicon.svg", type: "image/svg+xml" }],
-    shortcut: ["/vortex-favicon.svg"],
-    apple: [{ url: "/vortex-favicon.svg", type: "image/png" }],
+    icon: [{ url: "/gcmjp-logo-clean.svg", type: "image/svg+xml" }],
+    shortcut: ["/gcmjp-logo-clean.svg"],
+    apple: [{ url: "/gcmjp-logo-clean.svg", type: "image/png" }],
   },
 };
 
