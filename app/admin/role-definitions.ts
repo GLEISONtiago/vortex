@@ -2,7 +2,7 @@ export const roleDefinitions = {
   ADMIN: {
     label: "Administrador",
     summary: "Administra a plataforma, usuários, auditoria, backup e armazenamento, com acesso integral ao VÓRTEX.",
-    permissions: ["Visualiza todas as denúncias", "Gerencia usuários, perfis e grupamentos", "Pode intervir na triagem e nas atribuições como contingência", "Acessa auditoria, backup e armazenamento"],
+    permissions: ["Visualiza todas as denúncias", "Gerencia usuários, perfis e grupamentos", "Pode intervir em atribuições como contingência", "Acessa auditoria, backup e armazenamento"],
   },
   DIRETORIA: {
     label: "Diretoria Operacional",
