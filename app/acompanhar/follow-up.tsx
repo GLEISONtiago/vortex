@@ -10,17 +10,17 @@ const fieldClass = "mt-2 w-full rounded-lg border border-slate-300 bg-white px-3
 
 type PublicReport = {
   protocol: string;
-  status: "NOVA" | "EM_ANALISE" | "ENCAMINHADA" | "EM_ATENDIMENTO" | "CONCLUIDA" | "IMPROCEDENTE";
+  status: "NOVA" | "EM_ANALISE" | "EM_ATENDIMENTO" | "FINALIZADA";
+  resolution?: string | null;
   created_at: string;
+  messages: Array<{ id: string; sender_type: "STAFF"|"REPORTER"|"SYSTEM"; message: string; created_at: string }>;
 };
 
 const statusLabels: Record<PublicReport["status"], string> = {
   NOVA: "Nova",
   EM_ANALISE: "Em análise",
-  ENCAMINHADA: "Encaminhada",
   EM_ATENDIMENTO: "Em atendimento",
-  CONCLUIDA: "Concluída",
-  IMPROCEDENTE: "Improcedente",
+  FINALIZADA: "Finalizada",
 };
 
 export function FollowUp() {
@@ -29,6 +29,8 @@ export function FollowUp() {
   const [result, setResult] = useState<PublicReport | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [reply, setReply] = useState("");
+  const [sending, setSending] = useState(false);
 
   const consult = async () => {
     if (!protocol.trim() || !/^[0-9]{6}$/.test(pin)) {
@@ -55,6 +57,8 @@ export function FollowUp() {
 
     setResult(data[0] as PublicReport);
   };
+
+  const sendReply = async () => { if (!result || reply.trim().length < 2) return; setSending(true); setError(""); const supabase=createClient(); const { data, error: rpcError }=await supabase.rpc("vortex_send_public_report_message",{p_protocol:protocol.trim(),p_tracking_pin:pin,p_message:reply.trim()}); if(rpcError||!data){setError("Não foi possível enviar a mensagem.");setSending(false);return;} setReply(""); const refreshed=await supabase.rpc("vortex_get_public_report_by_protocol_pin",{p_protocol:protocol.trim(),p_tracking_pin:pin}); if(refreshed.data?.[0]) setResult(refreshed.data[0] as PublicReport); setSending(false); };
 
   return (
     <main className="min-h-screen bg-[#f4f7f8] text-[#102b42]">
@@ -84,7 +88,7 @@ export function FollowUp() {
             <button type="submit" disabled={loading} className="mt-6 min-h-11 w-full rounded-lg bg-[#0c766d] px-5 text-sm font-bold text-white hover:bg-[#095f58] disabled:cursor-not-allowed disabled:opacity-60">{loading ? "Consultando..." : "Consultar"}</button>
             <p className="mt-4 flex gap-2 text-xs leading-5 text-slate-500"><Shield /> O PIN protege o acesso ao acompanhamento da sua denúncia.</p>
           </form>
-          <div>{result ? <Result report={result} /> : <EmptyState />}</div>
+          <div>{result ? <Result report={result} reply={reply} setReply={setReply} sending={sending} sendReply={sendReply} /> : <EmptyState />}</div>
         </div>
       </div>
     </main>
@@ -95,7 +99,14 @@ function EmptyState() {
   return <section className="flex min-h-72 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center"><span className="grid size-12 place-items-center rounded-full bg-[#d8f1ed] text-[#0c766d]"><FileText /></span><h2 className="mt-4 text-lg font-bold">Aguardando consulta</h2><p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">As informações permitidas aparecerão aqui após uma consulta válida.</p></section>;
 }
 
-function Result({ report }: { report: PublicReport }) {
-  const createdAt = new Intl.DateTimeFormat("pt-BR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(report.created_at));
-  return <section className="rounded-2xl border border-[#0c766d]/25 bg-white p-5 shadow-sm sm:p-7"><p className="text-xs font-bold tracking-[.14em] text-[#0c766d]">ACOMPANHAMENTO DA DENÚNCIA</p><h2 className="mt-2 text-xl font-bold">Registro {report.protocol}</h2><dl className="mt-6 grid gap-4 rounded-xl bg-slate-50 p-4 sm:grid-cols-2"><div><dt className="text-xs font-bold tracking-wide text-slate-500">STATUS ATUAL</dt><dd className="mt-1 font-bold text-[#0c766d]">{statusLabels[report.status]}</dd></div><div><dt className="text-xs font-bold tracking-wide text-slate-500">REGISTRADA EM</dt><dd className="mt-1 font-semibold text-slate-700">{createdAt}</dd></div></dl><p className="mt-5 rounded-lg bg-[#d8f1ed]/50 p-4 text-sm leading-6 text-slate-700">As atualizações disponíveis para consulta serão apresentadas neste espaço, preservando a segurança das informações.</p></section>;
+function Result({ report, reply, setReply, sending, sendReply }: { report: PublicReport; reply:string; setReply:(v:string)=>void; sending:boolean; sendReply:()=>void }) {
+ const createdAt=new Intl.DateTimeFormat("pt-BR",{dateStyle:"medium",timeStyle:"short"}).format(new Date(report.created_at));
+ const resolutionLabels:Record<string,string>={PROCEDENTE:"Procedente",IMPROCEDENTE:"Improcedente",RESOLVIDA:"Resolvida",ENCAMINHADA_OUTRO_ORGAO:"Encaminhada a outro órgão",NAO_FOI_POSSIVEL_AVERIGUAR:"Não foi possível averiguar"};
+ const steps=["NOVA","EM_ANALISE","EM_ATENDIMENTO","FINALIZADA"]; const current=Math.max(0,steps.indexOf(report.status));
+ return <section className="rounded-2xl border border-[#0c766d]/25 bg-white p-5 shadow-sm sm:p-7"><p className="text-xs font-bold tracking-[.14em] text-[#0c766d]">ACOMPANHAMENTO DA DENÚNCIA</p><h2 className="mt-2 text-xl font-bold">Registro {report.protocol}</h2>
+ <div className="mt-6 grid grid-cols-4 gap-2">{steps.map((s,i)=><div key={s} className="text-center"><div className={`mx-auto size-3 rounded-full ${i<=current?"bg-[#0c766d]":"bg-slate-200"}`}/><div className={`mt-2 h-1 rounded ${i<=current?"bg-[#0c766d]":"bg-slate-200"}`}/><p className="mt-2 text-[11px] font-semibold text-slate-600">{statusLabels[s as PublicReport["status"]]}</p></div>)}</div>
+ <dl className="mt-6 grid gap-4 rounded-xl bg-slate-50 p-4 sm:grid-cols-2"><div><dt className="text-xs font-bold text-slate-500">STATUS ATUAL</dt><dd className="mt-1 font-bold text-[#0c766d]">{statusLabels[report.status]}</dd></div><div><dt className="text-xs font-bold text-slate-500">REGISTRADA EM</dt><dd className="mt-1 font-semibold text-slate-700">{createdAt}</dd></div>{report.status==="FINALIZADA"&&report.resolution&&<div className="sm:col-span-2"><dt className="text-xs font-bold text-slate-500">RESULTADO</dt><dd className="mt-1 font-semibold">{resolutionLabels[report.resolution]||report.resolution}</dd></div>}</dl>
+ <div className="mt-6"><h3 className="font-bold">Mensagens</h3>{report.messages?.length?<div className="mt-3 grid gap-3">{report.messages.map(m=><div key={m.id} className={`max-w-[90%] rounded-xl p-3 text-sm ${m.sender_type==="REPORTER"?"ml-auto bg-[#d8f1ed]":"bg-slate-100"}`}><p className="text-xs font-bold text-slate-500">{m.sender_type==="REPORTER"?"Você":m.sender_type==="STAFF"?"Equipe Vórtex":"Sistema"}</p><p className="mt-1 whitespace-pre-wrap">{m.message}</p><p className="mt-2 text-[11px] text-slate-400">{new Date(m.created_at).toLocaleString("pt-BR")}</p></div>)}</div>:<p className="mt-2 text-sm text-slate-500">Ainda não há mensagens neste acompanhamento.</p>}</div>
+ <div className="mt-6 border-t pt-5"><label className="text-sm font-bold">Enviar mensagem à equipe</label><textarea value={reply} onChange={e=>setReply(e.target.value)} maxLength={2000} rows={3} className={fieldClass} placeholder="Digite uma informação ou resposta para a equipe..." /><div className="mt-2 flex items-center justify-between"><span className="text-xs text-slate-400">{reply.length}/2000</span><button type="button" onClick={sendReply} disabled={sending||reply.trim().length<2} className="rounded-lg bg-[#102b42] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{sending?"Enviando...":"Enviar mensagem"}</button></div></div>
+ </section>;
 }
