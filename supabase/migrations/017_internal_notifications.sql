@@ -1,0 +1,4 @@
+-- Notificações internas do VÓRTEX.
+-- Adiciona título, corpo e leitura; cria avisos automáticos para:
+-- nova denúncia (coordenação/admin), alta urgência, atribuição ao operador e resposta do denunciante.
+-- Aplicada em produção via Supabase em 30/09/2026.
