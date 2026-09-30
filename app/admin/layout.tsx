@@ -34,13 +34,13 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return <div className="min-h-screen bg-[#f4f7f8] text-[#102b42]">
     <header className="bg-[#092940]"><div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4"><BrandMark /><div className="flex items-center gap-4 text-right text-xs text-slate-300"><span className="hidden sm:block">{profile.full_name || "Equipe GCMJP"}<br /><b>{roleLabel(profile.role)}</b></span><SignOutButton /></div></div></header>
-    <div className="mx-auto grid max-w-7xl md:grid-cols-[13rem_1fr]">
-      <nav className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-white p-3 md:min-h-[calc(100vh-72px)] md:flex-col md:border-b-0 md:border-r">
+    <div className="mx-auto w-full max-w-[1600px] md:grid md:grid-cols-[13rem_minmax(0,1fr)] xl:grid-cols-[14rem_minmax(0,1fr)]">
+      <nav className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-white p-3 md:min-h-[calc(100vh-72px)] md:flex-col md:overflow-visible md:border-b-0 md:border-r">
         <Link className="rounded-lg px-3 py-2 text-sm font-semibold hover:bg-[#d8f1ed]" href="/admin">Dashboard</Link>
         <Link className="rounded-lg px-3 py-2 text-sm font-semibold hover:bg-[#d8f1ed]" href="/admin/denuncias">Denúncias</Link>
         {profile.role === "ADMIN" && <><Link className="rounded-lg px-3 py-2 text-sm font-semibold hover:bg-[#d8f1ed]" href="/admin/usuarios">Usuários</Link><Link className="rounded-lg px-3 py-2 text-sm font-semibold hover:bg-[#d8f1ed]" href="/admin/administracao">Administração</Link><Link className="rounded-lg px-3 py-2 text-sm font-semibold hover:bg-[#d8f1ed]" href="/admin/backup">Backup e armazenamento</Link></>}
       </nav>
-      <main className="min-w-0 p-5 sm:p-8">{storageAlert && storageAlert.warningLevel !== "OK" && <Link href="/admin/backup" className={`mb-6 block rounded-xl border p-4 text-sm font-semibold ${storageAlert.warningLevel === "CRITICAL" ? "border-red-300 bg-red-50 text-red-900" : "border-amber-300 bg-amber-50 text-amber-900"}`}>Armazenamento em {storageAlert.usagePercent.toFixed(1)}%. Faça um backup e revise o espaço disponível.</Link>}{children}</main>
+      <main className="min-w-0 overflow-hidden p-4 sm:p-6 lg:p-8 xl:p-10">{storageAlert && storageAlert.warningLevel !== "OK" && <Link href="/admin/backup" className={`mb-6 block rounded-xl border p-4 text-sm font-semibold ${storageAlert.warningLevel === "CRITICAL" ? "border-red-300 bg-red-50 text-red-900" : "border-amber-300 bg-amber-50 text-amber-900"}`}>Armazenamento em {storageAlert.usagePercent.toFixed(1)}%. Faça um backup e revise o espaço disponível.</Link>}{children}</main>
     </div>
   </div>;
 }
