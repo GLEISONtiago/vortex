@@ -1,6 +1,7 @@
 import { requireAdmin } from "../../../lib/auth/require-admin";
 import { createAdminClient } from "../../../lib/supabase/admin";
 import { createPublicUpdate, deletePublicUpdate, updatePublicUpdate } from "./actions";
+import { PublicationImageUpload } from "./publication-image-upload";
 
 function localInput(value:string){const d=new Date(value);const pad=(n:number)=>String(n).padStart(2,"0");return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;}
 
@@ -19,10 +20,8 @@ export default async function PublicacoesPage(){
         <label className="text-sm font-semibold">Local (opcional)<input name="location" maxLength={160} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" /></label>
       </div>
       <label className="text-sm font-semibold">Resumo<textarea name="summary" required minLength={10} maxLength={600} rows={3} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" /></label>
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="text-sm font-semibold">Data e hora<input name="occurredAt" type="datetime-local" defaultValue={localInput(new Date().toISOString())} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" /></label>
-        <label className="text-sm font-semibold">URL HTTPS da imagem (opcional)<input name="imageUrl" type="url" placeholder="https://..." className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" /></label>
-      </div>
+      <label className="text-sm font-semibold">Data e hora<input name="occurredAt" type="datetime-local" defaultValue={localInput(new Date().toISOString())} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" /></label>
+      <PublicationImageUpload />
       <label className="flex items-center gap-2 text-sm font-semibold"><input name="published" type="checkbox" /> Publicar imediatamente</label>
       <button className="w-fit rounded-lg bg-[#0c766d] px-5 py-2.5 text-sm font-bold text-white">Criar publicação</button>
     </form>
@@ -38,10 +37,8 @@ export default async function PublicacoesPage(){
             <input name="location" maxLength={160} defaultValue={item.location??""} placeholder="Local" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
           </div>
           <textarea name="summary" required minLength={10} maxLength={600} rows={2} defaultValue={item.summary} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-          <div className="grid gap-3 md:grid-cols-2">
-            <input name="occurredAt" type="datetime-local" defaultValue={localInput(item.occurred_at)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-            <input name="imageUrl" type="url" defaultValue={item.image_url??""} placeholder="URL HTTPS da imagem" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-          </div>
+          <input name="occurredAt" type="datetime-local" defaultValue={localInput(item.occurred_at)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <PublicationImageUpload initialUrl={item.image_url??""} initialPath={item.image_path??""} />
           <label className="flex items-center gap-2 text-sm"><input name="published" type="checkbox" defaultChecked={item.published} /> Publicada</label>
           <div className="flex flex-wrap gap-2"><button className="rounded-lg bg-[#0c766d] px-4 py-2 text-sm font-bold text-white">Salvar alterações</button><button formAction={deletePublicUpdate} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-700">Excluir</button></div>
         </form>)}
