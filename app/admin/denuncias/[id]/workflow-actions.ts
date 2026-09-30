@@ -38,7 +38,7 @@ export async function updateReportStatus(reportId: string, newStatus: string, no
 export async function addInternalNote(reportId: string, note: string) {
   const clean = note.trim(); if (clean.length < 3) return { error: "Informe uma observação válida." };
   const ctx = await context(reportId); if ("error" in ctx) return { error: ctx.error };
-  const { supabase, userId, report } = ctx;
+  const { supabase } = ctx;
   const { error } = await supabase.rpc("vortex_add_internal_note", { p_report_id: reportId, p_note: clean });
   if (error) return { error: "Não foi possível registrar a observação." };
   revalidatePath(`/admin/denuncias/${reportId}`); return { message: "Observação registrada no histórico." };
