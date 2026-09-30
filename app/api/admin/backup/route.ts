@@ -81,7 +81,7 @@ export async function GET(request: Request) {
 
   const { data: reports, error: reportsError } = await admin
     .from("vortex_reports")
-    .select("id, protocol, status, urgency, description, address, neighborhood, reference_point, latitude, longitude, event_at, created_at, updated_at, vortex_categories(name)")
+    .select("id, protocol, category_id, status, urgency, resolution, description, address, neighborhood, reference_point, latitude, longitude, event_at, tracking_code_hash, tracking_pin_hash, created_at, updated_at, vortex_categories(name)")
     .gte("created_at", range.start)
     .lt("created_at", range.end)
     .order("created_at", { ascending: true });
@@ -125,7 +125,7 @@ export async function GET(request: Request) {
   const selectedReports = reportRows.filter((report) => selectedIds.has(report.id));
   const selectedAttachments = (attachments ?? []).filter((attachment) => selectedIds.has(attachment.report_id));
 
-  const [{ data: history }, { data: messages }] = await Promise.all([
+  const [{ data: history }, { data: messages }, { data: assignments }] = await Promise.all([
     admin
       .from("vortex_report_history")
       .select("id, report_id, old_status, new_status, note, created_at")
@@ -136,7 +136,18 @@ export async function GET(request: Request) {
       .select("id, report_id, sender_type, message, created_at, read_at")
       .in("report_id", Array.from(selectedIds))
       .order("created_at", { ascending: true }),
+    admin
+      .from("vortex_report_assignments")
+      .select("id, report_id, assigned_to, assigned_by, assigned_at, ended_at, note, created_at")
+      .in("report_id", Array.from(selectedIds))
+      .order("assigned_at", { ascending: true }),
   ]);
+
+  const profileIds = Array.from(new Set((assignments ?? []).flatMap((item) => [item.assigned_to, item.assigned_by]).filter(Boolean))) as string[];
+  const { data: assignmentProfiles } = profileIds.length
+    ? await admin.from("vortex_profiles").select("id, full_name").in("id", profileIds)
+    : { data: [] as Array<{ id: string; full_name: string | null }> };
+  const profileNames = new Map((assignmentProfiles ?? []).map((profile) => [profile.id, profile.full_name]));
 
   const availablePaths = selectedAttachments
     .filter((attachment) => !attachment.storage_deleted_at)
@@ -168,6 +179,11 @@ export async function GET(request: Request) {
       })),
     history: (history ?? []).filter((item) => item.report_id === report.id),
     messages: (messages ?? []).filter((item) => item.report_id === report.id),
+    assignments: (assignments ?? []).filter((item) => item.report_id === report.id).map((item) => ({
+      ...item,
+      assigned_to_name: profileNames.get(item.assigned_to) ?? null,
+      assigned_by_name: item.assigned_by ? profileNames.get(item.assigned_by) ?? null : null,
+    })),
   }));
 
   return NextResponse.json({
