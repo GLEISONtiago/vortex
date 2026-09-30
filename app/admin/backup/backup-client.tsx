@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { createZip, safeFileName, textBytes } from "../../../lib/backup/zip";
+import { offlineBackupCss, offlineIndexHtml, offlineReportHtml } from "../../../lib/backup/offline-html";
 
 type Usage = {
   usedBytes: number;
@@ -41,13 +42,16 @@ type BackupAttachment = {
   backed_up_at: string | null;
   storage_deleted_at: string | null;
   signedUrl: string | null;
+  backup_file?: string | null;
 };
 
 type BackupReport = {
   id: string;
   protocol: string;
+  category_id: string | null;
   status: string;
   urgency: string;
+  resolution: string | null;
   description: string;
   address: string | null;
   neighborhood: string | null;
@@ -57,10 +61,13 @@ type BackupReport = {
   event_at: string | null;
   created_at: string;
   updated_at: string;
+  tracking_code_hash: string | null;
+  tracking_pin_hash: string | null;
   vortex_categories: { name?: string } | Array<{ name?: string }> | null;
   attachments: BackupAttachment[];
   history: Array<Record<string, unknown>>;
   messages: Array<Record<string, unknown>>;
+  assignments: Array<Record<string, unknown>>;
 };
 
 type BackupPayload = {
@@ -92,6 +99,7 @@ function reportText(report: BackupReport) {
     `Categoria: ${categoryName(report)}`,
     `Status: ${report.status}`,
     `Urgência: ${report.urgency}`,
+    `Resultado: ${report.resolution || "Não informado"}`,
     `Registrada em: ${new Date(report.created_at).toLocaleString("pt-BR")}`,
     `Fato ocorrido em: ${report.event_at ? new Date(report.event_at).toLocaleString("pt-BR") : "Não informado"}`,
     "",
@@ -182,12 +190,21 @@ export function BackupClient({
           `Gerado em: ${new Date(payload.generatedAt).toLocaleString("pt-BR")}`,
           `Denúncias: ${payload.reports.length}`,
           "",
+          "COMO CONSULTAR:",
+          "1. Extraia todo o conteúdo do ZIP.",
+          "2. Abra ABRIR-BACKUP.html no navegador.",
+          "3. O painel funciona offline e permite navegar pelas denúncias e anexos.",
+          "",
           "Estrutura:",
+          "ABRIR-BACKUP.html (painel offline)",
+          "denuncias/ANO/PROTOCOLO/index.html",
           "denuncias/ANO/PROTOCOLO/denuncia.txt",
           "denuncias/ANO/PROTOCOLO/denuncia.json",
           "denuncias/ANO/PROTOCOLO/historico.json",
           "denuncias/ANO/PROTOCOLO/mensagens.json",
+          "denuncias/ANO/PROTOCOLO/atribuicoes.json",
           "denuncias/ANO/PROTOCOLO/anexos/",
+          "manifesto.json (usado para validação/restauração)",
           "",
           "Guarde este arquivo em local seguro antes de confirmar o backup no sistema.",
         ].join("\r\n")),
@@ -209,6 +226,7 @@ export function BackupClient({
         }, null, 2)),
       });
 
+      const offlineReports: BackupReport[] = [];
       let imageIndex = 0;
       const imageTotal = payload.reports.reduce(
         (sum, report) => sum + report.attachments.filter((item) => item.signedUrl).length,
@@ -220,48 +238,62 @@ export function BackupClient({
         const protocol = safeFileName(report.protocol, report.id);
         const folder = `${root}/denuncias/${year}/${protocol}`;
 
-        files.push({
-          path: `${folder}/denuncia.txt`,
-          data: textBytes(reportText(report)),
-        });
-        files.push({
-          path: `${folder}/denuncia.json`,
-          data: textBytes(JSON.stringify({
-            ...report,
-            attachments: report.attachments.map(({ signedUrl, ...attachment }) => attachment),
-          }, null, 2)),
-        });
-        files.push({
-          path: `${folder}/historico.json`,
-          data: textBytes(JSON.stringify(report.history, null, 2)),
-        });
-        files.push({
-          path: `${folder}/mensagens.json`,
-          data: textBytes(JSON.stringify(report.messages, null, 2)),
+        let attachmentNumber = 0;
+        const backupAttachments = report.attachments.map((attachment) => {
+          attachmentNumber += 1;
+          if (!attachment.signedUrl) return { ...attachment, backup_file: null };
+          const originalBase = (attachment.original_name || `imagem-${attachmentNumber}`).replace(/\.[^.]+$/, "");
+          const name = safeFileName(originalBase, `imagem-${attachmentNumber}`);
+          const fileName = `${String(attachmentNumber).padStart(2, "0")}-${name}.${extension(attachment.mime_type)}`;
+          return { ...attachment, backup_file: `anexos/${fileName}` };
         });
 
-        let attachmentNumber = 0;
-        for (const attachment of report.attachments) {
-          attachmentNumber += 1;
+        const reportForBackup = { ...report, attachments: backupAttachments.map(({ signedUrl, ...attachment }) => attachment) } as BackupReport;
+        offlineReports.push(reportForBackup);
+
+        files.push({ path: `${folder}/denuncia.txt`, data: textBytes(reportText(reportForBackup)) });
+        files.push({ path: `${folder}/denuncia.json`, data: textBytes(JSON.stringify(reportForBackup, null, 2)) });
+        files.push({ path: `${folder}/historico.json`, data: textBytes(JSON.stringify(report.history, null, 2)) });
+        files.push({ path: `${folder}/mensagens.json`, data: textBytes(JSON.stringify(report.messages, null, 2)) });
+        files.push({ path: `${folder}/atribuicoes.json`, data: textBytes(JSON.stringify(report.assignments, null, 2)) });
+        files.push({ path: `${folder}/index.html`, data: textBytes(offlineReportHtml(reportForBackup)) });
+
+        for (let index = 0; index < report.attachments.length; index += 1) {
+          const attachment = report.attachments[index];
+          const backupAttachment = backupAttachments[index];
           if (!attachment.signedUrl) {
             if (attachment.storage_deleted_at) continue;
             throw new Error(`A imagem ${attachment.original_name || attachment.id} não pôde ser incluída. O backup foi cancelado para evitar uma cópia incompleta.`);
           }
-
           imageIndex += 1;
           setMessage(`Baixando imagem ${imageIndex} de ${imageTotal} para montar o arquivo...`);
           const data = await fetchBytes(attachment.signedUrl);
-          const originalBase = (attachment.original_name || `imagem-${attachmentNumber}`)
-            .replace(/\.[^.]+$/, "");
-          const name = safeFileName(originalBase, `imagem-${attachmentNumber}`);
-          const fileName = `${String(attachmentNumber).padStart(2, "0")}-${name}.${extension(attachment.mime_type)}`;
-
-          files.push({
-            path: `${folder}/anexos/${fileName}`,
-            data,
-          });
+          files.push({ path: `${folder}/${backupAttachment.backup_file}`, data });
         }
       }
+
+      files.push({ path: `${root}/assets/backup.css`, data: textBytes(offlineBackupCss()) });
+      const panel = offlineIndexHtml(offlineReports, payload.generatedAt, payload.month, payload.part, payload.totalParts);
+      files.push({ path: `${root}/index.html`, data: textBytes(panel) });
+      files.push({ path: `${root}/ABRIR-BACKUP.html`, data: textBytes(panel) });
+      files.push({
+        path: `${root}/manifesto.json`,
+        data: textBytes(JSON.stringify({
+          system: "VORTEX",
+          formatVersion: 2,
+          generatedAt: payload.generatedAt,
+          month: payload.month,
+          part: payload.part,
+          totalParts: payload.totalParts,
+          reportCount: offlineReports.length,
+          attachmentCount: offlineReports.reduce((sum, report) => sum + report.attachments.filter((item) => item.backup_file).length, 0),
+          reports: offlineReports.map((report) => ({
+            id: report.id,
+            protocol: report.protocol,
+            folder: `denuncias/${new Date(report.created_at).getFullYear()}/${safeFileName(report.protocol, report.id)}`,
+          })),
+        }, null, 2)),
+      });
 
       setMessage("Montando o arquivo ZIP no navegador...");
       const zip = createZip(files);
