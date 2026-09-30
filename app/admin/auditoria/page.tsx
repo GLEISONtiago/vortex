@@ -15,6 +15,7 @@ const labels: Record<string,string> = {
   USER_ACTIVATED:"Usuário ativado",
   USER_DEACTIVATED:"Usuário desativado",
   BACKUP_CONFIRMED:"Backup confirmado",
+  BACKUP_RESTORED:"Backup restaurado",
   STORAGE_CLEANUP:"Limpeza de armazenamento",
 };
 
