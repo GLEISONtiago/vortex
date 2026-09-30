@@ -8,7 +8,8 @@ const imageBucket="vortex-public-updates";
 function value(formData:FormData,key:string){return String(formData.get(key)??"").trim();}
 function idValue(formData:FormData){const id=value(formData,"id");return /^[0-9a-f-]{36}$/i.test(id)?id:null;}
 function imagePath(raw:string){return /^publicacoes\/\d{4}\/[0-9a-f-]{36}\.webp$/i.test(raw)?raw:null;}
-function position(raw:string){const n=Number(raw);return Number.isFinite(n)?Math.min(100,Math.max(0,n)):50;}\nfunction occurred(raw:string){const date=new Date(raw);return Number.isNaN(date.getTime())?new Date().toISOString():date.toISOString();}
+function position(raw:string){const n=Number(raw);return Number.isFinite(n)?Math.min(100,Math.max(0,n)):50;}
+function occurred(raw:string){const date=new Date(raw);return Number.isNaN(date.getTime())?new Date().toISOString():date.toISOString();}
 async function audit(actorId:string,action:string,entityId:string,metadata:Record<string,unknown>){
   await createAdminClient().from("vortex_audit_log").insert({actor_id:actorId,action,entity_type:"PUBLIC_UPDATE",entity_id:entityId,metadata});
 }
@@ -23,7 +24,8 @@ async function removeStoredImage(path:string|null){
 export async function createPublicUpdate(formData:FormData){
   const adminUser=await requireAdmin();
   const title=value(formData,"title").slice(0,160);
-  const summary=value(formData,"summary").slice(0,600);\n  const content=value(formData,"content");
+  const summary=value(formData,"summary").slice(0,600);
+  const content=value(formData,"content");
   const location=value(formData,"location").slice(0,160)||null;
   const rawPath=value(formData,"imagePath");
   const path=imagePath(rawPath);
