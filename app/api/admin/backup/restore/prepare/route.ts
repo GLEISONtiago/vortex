@@ -80,9 +80,13 @@ export async function POST(request:Request){
     ]);
 
     try{
+      const historyActorIds=Array.from(new Set((body.history??[]).map((h)=>uuid(h.changed_by)).filter(Boolean))) as string[];
+      const {data:historyProfiles}=historyActorIds.length?await admin.from("vortex_profiles").select("id").in("id",historyActorIds):{data:[] as Array<{id:string}>};
+      const validHistoryActors=new Set((historyProfiles??[]).map((p)=>p.id));
       const history=(body.history??[]).slice(0,500).map((h)=>({
         id:uuid(h.id)??undefined,report_id:backupId,old_status:str(h.old_status,40),new_status:str(h.new_status,40)??"NOVA",
-        note:str(h.note,4000),changed_by:null,created_at:iso(h.created_at)??new Date().toISOString(),
+        note:str(h.note,4000),changed_by:uuid(h.changed_by)&&validHistoryActors.has(String(h.changed_by))?String(h.changed_by):null,
+        created_at:iso(h.created_at)??new Date().toISOString(),
       }));
       if(history.length){const {error}=await admin.from("vortex_report_history").insert(history);if(error)throw error;}
 
