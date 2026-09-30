@@ -10,7 +10,8 @@ export function PublicationImageUpload({initialUrl="",initialPath="",initialX=50
   const root=useRef<HTMLDivElement>(null);
   const [url,setUrl]=useState(initialUrl);
   const [path,setPath]=useState(initialPath);
-  const [busy,setBusy]=useState(false);\n  const [x,setX]=useState(initialX); const [y,setY]=useState(initialY);
+  const [busy,setBusy]=useState(false);
+  const [x,setX]=useState(initialX); const [y,setY]=useState(initialY);
   const [message,setMessage]=useState("");
 
   function lockForm(locked:boolean){
