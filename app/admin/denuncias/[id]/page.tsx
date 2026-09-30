@@ -25,7 +25,7 @@ export default async function ReportDetail({params}:{params:Promise<{id:string}>
  const attachmentLinks=await Promise.all((attachments??[]).map(async attachment=>{if(attachment.storage_deleted_at)return{...attachment,signedUrl:null};const {data}=await admin.storage.from("vortex-attachments").createSignedUrl(attachment.storage_path,60*5);return{...attachment,signedUrl:data?.signedUrl??null};}));
  const category=report.vortex_categories as {name?:string}|null;const unit=report.unit as {name?:string}|null;
  const canManage=me?.role==="ADMIN"||me?.role==="COORDENADOR";
- const canRoute=me?.role==="ADMIN"||me?.role==="DIRETORIA";
+ const canRoute=me?.role==="DIRETORIA";
 
  return <><Link href="/admin/denuncias" className="text-sm font-bold text-[#0c766d]">← Denúncias</Link>
  <div className="mt-5 flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold tracking-[.14em] text-[#0c766d]">{report.protocol}</p><h1 className="mt-1 text-3xl font-bold">Detalhes da denúncia</h1></div><span className="rounded-full bg-[#d8f1ed] px-3 py-1 text-sm font-bold text-[#0c766d]">{statusLabel(report.status)}</span></div>
