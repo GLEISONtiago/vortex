@@ -10,7 +10,7 @@ import { WorkflowPanel } from "./workflow-panel";
 
 export default async function ReportDetail({params}:{params:Promise<{id:string}>}){
  const {id}=await params;const supabase=await createClient();const {data:claimsData}=await supabase.auth.getClaims();const userId=claimsData?.claims?.sub;
- const [{data:report},{data:history},{data:attachments},{data:messages},{data:assignment},{data:candidates},{data:me},{data:myUnits},{data:units}]=await Promise.all([
+ const [{data:report},{data:history},{data:attachments},{data:messages},{data:assignment},{data:candidates},{data:me},{data:units}]=await Promise.all([
   supabase.from("vortex_reports").select("*, vortex_categories(name), unit:vortex_units(name)").eq("id",id).maybeSingle(),
   supabase.from("vortex_report_history").select("*").eq("report_id",id).order("created_at",{ascending:false}),
   supabase.from("vortex_attachments").select("*").eq("report_id",id),
@@ -18,7 +18,6 @@ export default async function ReportDetail({params}:{params:Promise<{id:string}>
   supabase.from("vortex_report_assignments").select("assigned_to,assigned_at,assignee:vortex_profiles!vortex_report_assignments_assigned_to_fkey(id,full_name,role,functional_title)").eq("report_id",id).is("ended_at",null).maybeSingle(),
   supabase.rpc("vortex_assignment_candidates",{p_report_id:id}),
   userId?supabase.from("vortex_profiles").select("role").eq("id",userId).maybeSingle():Promise.resolve({data:null}),
-  supabase.rpc("vortex_my_units"),
   supabase.from("vortex_units").select("id,name").eq("active",true).order("name"),
  ]);
  if(!report)notFound();
