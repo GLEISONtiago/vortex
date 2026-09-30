@@ -21,21 +21,23 @@ function queryString(params: Record<string, string | undefined>) {
   return q.toString();
 }
 
-export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ status?: string; urgency?: string; q?: string; neighborhood?: string; from?: string; to?: string; page?: string }> }) {
+export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ status?: string; urgency?: string; unit?: string; q?: string; neighborhood?: string; from?: string; to?: string; page?: string }> }) {
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
   const supabase = await createClient();
+  const { data: units } = await supabase.from("vortex_units").select("id,name").eq("active", true).order("name");
 
   let query = supabase.from("vortex_reports")
-    .select("id, protocol, status, urgency, neighborhood, event_at, created_at, vortex_categories(name), vortex_report_assignments!left(assigned_to, ended_at, assignee:vortex_profiles!vortex_report_assignments_assigned_to_fkey(full_name))", { count: "exact" })
+    .select("id, protocol, status, urgency, unit_id, neighborhood, event_at, created_at, vortex_categories(name), unit:vortex_units(name), vortex_report_assignments!left(assigned_to, ended_at, assignee:vortex_profiles!vortex_report_assignments_assigned_to_fkey(full_name))", { count: "exact" })
     .is("vortex_report_assignments.ended_at", null)
     .order("created_at", { ascending: false })
     .range(from, to);
 
   if (params.status && STATUSES.includes(params.status)) query = query.eq("status", params.status);
   if (params.urgency && URGENCIES.includes(params.urgency)) query = query.eq("urgency", params.urgency);
+  if (params.unit && (units ?? []).some((unit) => unit.id === params.unit)) query = query.eq("unit_id", params.unit);
   if (params.q?.trim()) query = query.ilike("protocol", `%${params.q.trim()}%`);
   if (params.neighborhood?.trim()) query = query.ilike("neighborhood", `%${params.neighborhood.trim()}%`);
   if (params.from) query = query.gte("created_at", `${params.from}T00:00:00`);
@@ -45,8 +47,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const rows = data ?? [];
   const total = count ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const activeFilters = Boolean(params.status || params.urgency || params.q || params.neighborhood || params.from || params.to);
-  const base = { q: params.q, status: params.status, urgency: params.urgency, neighborhood: params.neighborhood, from: params.from, to: params.to };
+  const activeFilters = Boolean(params.status || params.urgency || params.unit || params.q || params.neighborhood || params.from || params.to);
+  const base = { q: params.q, status: params.status, urgency: params.urgency, unit: params.unit, neighborhood: params.neighborhood, from: params.from, to: params.to };
 
   return <>
     <div className="flex flex-wrap items-end justify-between gap-4">
@@ -59,7 +61,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         <label className="text-xs font-semibold text-slate-600">Protocolo<input name="q" defaultValue={params.q} placeholder="Ex.: VTX-2026-000123" className="mt-1.5 w-full rounded-lg border border-slate-300 p-3 text-sm outline-none focus:border-[#0c766d]" /></label>
         <label className="text-xs font-semibold text-slate-600">Bairro<input name="neighborhood" defaultValue={params.neighborhood} placeholder="Buscar bairro" className="mt-1.5 w-full rounded-lg border border-slate-300 p-3 text-sm outline-none focus:border-[#0c766d]" /></label>
         <label className="text-xs font-semibold text-slate-600">Status<select name="status" defaultValue={params.status} className="mt-1.5 w-full rounded-lg border border-slate-300 p-3 text-sm"><option value="">Todos</option>{STATUSES.map(x=><option key={x} value={x}>{statusLabel(x)}</option>)}</select></label>
-        <label className="text-xs font-semibold text-slate-600">Urgência<select name="urgency" defaultValue={params.urgency} className="mt-1.5 w-full rounded-lg border border-slate-300 p-3 text-sm"><option value="">Todas</option>{URGENCIES.map(x=><option key={x} value={x}>{urgencyLabel(x)}</option>)}</select></label>
+        <label className="text-xs font-semibold text-slate-600">Urgência<select name="urgency" defaultValue={params.urgency} className="mt-1.5 w-full rounded-lg border border-slate-300 p-3 text-sm"><option value="">Todas</option>{URGENCIES.map(x=><option key={x} value={x}>{urgencyLabel(x)}</option>)}</select></label><label className="text-xs font-semibold text-slate-600">Grupamento<select name="unit" defaultValue={params.unit} className="mt-1.5 w-full rounded-lg border border-slate-300 p-3 text-sm"><option value="">Todos disponíveis</option>{(units ?? []).map(unit=><option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></label>
         <label className="text-xs font-semibold text-slate-600">Recebida a partir de<input type="date" name="from" defaultValue={params.from} className="mt-1.5 w-full rounded-lg border border-slate-300 p-3 text-sm" /></label>
         <label className="text-xs font-semibold text-slate-600">Recebida até<input type="date" name="to" defaultValue={params.to} className="mt-1.5 w-full rounded-lg border border-slate-300 p-3 text-sm" /></label>
       </div>
@@ -67,16 +69,16 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     </form>
 
     {error ? <p className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-800 ring-1 ring-red-200">Não foi possível carregar as denúncias.</p> : rows.length === 0 ? <div className="mt-6 rounded-xl bg-white p-10 text-center ring-1 ring-slate-200"><p className="font-semibold">Nenhuma denúncia encontrada.</p><p className="mt-1 text-sm text-slate-500">Revise os filtros aplicados ou aguarde novos registros.</p></div> : <>
-      <div className="mt-6 grid gap-3 md:hidden">{rows.map((row) => { const assignments = row.vortex_report_assignments as unknown as Array<{ assignee?: { full_name?: string | null } | null }> | null; const responsible = assignments?.[0]?.assignee?.full_name || "Não atribuída"; return <Link href={`/admin/denuncias/${row.id}`} key={row.id} className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:ring-[#0c766d]"><div className="flex items-start justify-between gap-3"><div><p className="font-bold text-[#0c766d]">{row.protocol}</p><p className="mt-1 text-sm font-semibold text-[#102b42]">{(row.vortex_categories as {name?:string}|null)?.name || "Sem categoria"}</p></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${badgeClass("urgency", row.urgency)}`}>{urgencyLabel(row.urgency)}</span></div><div className="mt-4 flex flex-wrap gap-2"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${badgeClass("status", row.status)}`}>{statusLabel(row.status)}</span><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700">{row.neighborhood || "Bairro não informado"}</span></div><div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3 text-xs"><div><p className="text-slate-500">Responsável</p><p className={`mt-1 font-semibold ${responsible === "Não atribuída" ? "text-amber-700" : "text-slate-700"}`}>{responsible}</p></div><div className="text-right"><p className="text-slate-500">Recebida</p><p className="mt-1 font-semibold text-slate-700">{new Date(row.created_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</p></div></div></Link>; })}</div>
+      <div className="mt-6 grid gap-3 md:hidden">{rows.map((row) => { const assignments = row.vortex_report_assignments as unknown as Array<{ assignee?: { full_name?: string | null } | null }> | null; const responsible = assignments?.[0]?.assignee?.full_name || "Não atribuída"; return <Link href={`/admin/denuncias/${row.id}`} key={row.id} className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:ring-[#0c766d]"><div className="flex items-start justify-between gap-3"><div><p className="font-bold text-[#0c766d]">{row.protocol}</p><p className="mt-1 text-sm font-semibold text-[#102b42]">{(row.vortex_categories as {name?:string}|null)?.name || "Sem categoria"}</p></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${badgeClass("urgency", row.urgency)}`}>{urgencyLabel(row.urgency)}</span></div><div className="mt-4 flex flex-wrap gap-2"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${badgeClass("status", row.status)}`}>{statusLabel(row.status)}</span><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700">{row.neighborhood || "Bairro não informado"}</span><span className="rounded-full bg-teal-50 px-2.5 py-1 text-xs text-teal-800">{(row.unit as {name?:string}|null)?.name || "Grupo Operacional"}</span></div><div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3 text-xs"><div><p className="text-slate-500">Responsável</p><p className={`mt-1 font-semibold ${responsible === "Não atribuída" ? "text-amber-700" : "text-slate-700"}`}>{responsible}</p></div><div className="text-right"><p className="text-slate-500">Recebida</p><p className="mt-1 font-semibold text-slate-700">{new Date(row.created_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</p></div></div></Link>; })}</div>
       <div className="mt-6 hidden overflow-x-auto rounded-xl bg-white shadow-sm ring-1 ring-slate-200 md:block">
         <table className="w-full min-w-[900px] text-left text-sm xl:min-w-0">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="p-4">Protocolo</th><th className="px-2">Categoria</th><th className="px-2">Urgência</th><th className="px-2">Status</th><th className="px-2">Bairro</th><th className="px-2">Responsável</th><th className="px-2">Recebida</th><th className="pr-4 text-right">Ação</th></tr></thead>
+          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="p-4">Protocolo</th><th className="px-2">Categoria</th><th className="px-2">Urgência</th><th className="px-2">Status</th><th className="px-2">Grupamento</th><th className="px-2">Bairro</th><th className="px-2">Responsável</th><th className="px-2">Recebida</th><th className="pr-4 text-right">Ação</th></tr></thead>
           <tbody>{rows.map((row) => { const assignments = row.vortex_report_assignments as unknown as Array<{ assignee?: { full_name?: string | null } | null }> | null; const responsible = assignments?.[0]?.assignee?.full_name || "Não atribuída"; return <tr className="border-t border-slate-100 transition hover:bg-slate-50/80" key={row.id}>
             <td className="p-4"><Link className="font-bold text-[#0c766d] hover:underline" href={`/admin/denuncias/${row.id}`}>{row.protocol}</Link></td>
             <td className="px-2">{(row.vortex_categories as {name?:string}|null)?.name || "—"}</td>
             <td className="px-2"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${badgeClass("urgency", row.urgency)}`}>{urgencyLabel(row.urgency)}</span></td>
             <td className="px-2"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${badgeClass("status", row.status)}`}>{statusLabel(row.status)}</span></td>
-            <td className="px-2">{row.neighborhood || "—"}</td><td className={`px-2 ${responsible === "Não atribuída" ? "font-semibold text-amber-700" : ""}`}>{responsible}</td>
+            <td className="px-2">{(row.unit as {name?:string}|null)?.name || "Grupo Operacional"}</td><td className="px-2">{row.neighborhood || "—"}</td><td className={`px-2 ${responsible === "Não atribuída" ? "font-semibold text-amber-700" : ""}`}>{responsible}</td>
             <td className="px-2"><span className="whitespace-nowrap">{new Date(row.created_at).toLocaleDateString("pt-BR")}</span><br/><span className="text-xs text-slate-500">{new Date(row.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span></td>
             <td className="pr-4 text-right"><Link href={`/admin/denuncias/${row.id}`} className="inline-flex rounded-lg border border-[#0c766d] px-3 py-2 text-xs font-bold text-[#0c766d] hover:bg-[#d8f1ed]">Ver detalhes</Link></td>
           </tr>; })}</tbody>
