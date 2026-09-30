@@ -1,0 +1,53 @@
+"use server";
+import { revalidatePath } from "next/cache";
+import { createClient } from "../../../../lib/supabase/server";
+
+const allowedStatuses = ["NOVA","EM_ANALISE","ENCAMINHADA","EM_ATENDIMENTO","CONCLUIDA","IMPROCEDENTE"];
+
+async function context(reportId: string) {
+  const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims?.sub;
+  if (!userId) return { supabase, error: "Sua sessão expirou." };
+  const [{ data: me }, { data: report }] = await Promise.all([
+    supabase.from("vortex_profiles").select("role, active").eq("id", userId).maybeSingle(),
+    supabase.from("vortex_reports").select("id, status").eq("id", reportId).maybeSingle(),
+  ]);
+  if (!me?.active || !report) return { supabase, error: "Acesso indisponível." };
+  return { supabase, userId, me, report };
+}
+
+export async function updateReportStatus(reportId: string, newStatus: string, note: string) {
+  if (!allowedStatuses.includes(newStatus)) return { error: "Status inválido." };
+  const ctx = await context(reportId); if ("error" in ctx) return { error: ctx.error };
+  const { supabase, userId, me, report } = ctx;
+  const canManage = ["ADMIN","COORDENADOR"].includes(me!.role);
+  if (!canManage) {
+    const { data: assignment } = await supabase.from("vortex_report_assignments").select("id").eq("report_id", reportId).eq("assigned_to", userId!).is("ended_at", null).maybeSingle();
+    if (!assignment) return { error: "Somente o responsável atual pode atualizar esta denúncia." };
+  }
+  if (report!.status === newStatus) return { message: "A denúncia já está neste status." };
+  const { error } = await supabase.from("vortex_reports").update({ status: newStatus, updated_at: new Date().toISOString() }).eq("id", reportId);
+  if (error) return { error: "Não foi possível atualizar o status." };
+  await supabase.from("vortex_report_history").insert({ report_id: reportId, old_status: report!.status, new_status: newStatus, note: note.trim() || null, changed_by: userId });
+  revalidatePath("/admin"); revalidatePath("/admin/denuncias"); revalidatePath(`/admin/denuncias/${reportId}`);
+  return { message: "Status atualizado com sucesso." };
+}
+
+export async function addInternalNote(reportId: string, note: string) {
+  const clean = note.trim(); if (clean.length < 3) return { error: "Informe uma observação válida." };
+  const ctx = await context(reportId); if ("error" in ctx) return { error: ctx.error };
+  const { supabase, userId, report } = ctx;
+  const { error } = await supabase.from("vortex_report_history").insert({ report_id: reportId, old_status: report!.status, new_status: report!.status, note: clean, changed_by: userId });
+  if (error) return { error: "Não foi possível registrar a observação." };
+  revalidatePath(`/admin/denuncias/${reportId}`); return { message: "Observação registrada no histórico." };
+}
+
+export async function sendReporterMessage(reportId: string, message: string) {
+  const clean = message.trim(); if (clean.length < 2) return { error: "Digite uma mensagem." };
+  const ctx = await context(reportId); if ("error" in ctx) return { error: ctx.error };
+  const { supabase } = ctx;
+  const { error } = await supabase.from("vortex_messages").insert({ report_id: reportId, sender_type: "STAFF", message: clean });
+  if (error) return { error: "Não foi possível enviar a mensagem." };
+  revalidatePath(`/admin/denuncias/${reportId}`); return { message: "Mensagem disponibilizada no acompanhamento da denúncia." };
+}
