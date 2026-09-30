@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "../../../lib/supabase/client";
-import { readVortexZip, zipJson, type StoredZip } from "../../../lib/backup/read-zip";
+import { readVortexZip, type StoredZip } from "../../../lib/backup/read-zip";
 
 type Json=Record<string,unknown>;
 type Manifest={system?:string;formatVersion?:number;generatedAt?:string;month?:string;part?:number;totalParts?:number;reports?:Array<{id?:string;protocol?:string;folder:string}>};
@@ -89,7 +89,7 @@ export function RestoreBackup(){
           const bytes=parsed.zip.files.get(`${parsed.zip.root}/${item.folder}/${backupFile}`);
           if(!bytes)throw new Error(`O anexo ${backupFile} de ${protocol} não foi encontrado no ZIP.`);
           setMessage(`Restaurando anexos de ${protocol}...`);
-          const blob=new Blob([bytes.slice().buffer],{type:String(upload.mime_type??"image/webp")});
+          const blob=new Blob([bytes.slice().buffer as ArrayBuffer],{type:String(upload.mime_type??"image/webp")});
           const {error}=await supabase.storage.from("vortex-attachments").uploadToSignedUrl(
             String(upload.path),String(upload.token),blob,{contentType:String(upload.mime_type??"image/webp")},
           );
