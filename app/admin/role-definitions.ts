@@ -9,6 +9,11 @@ export const roleDefinitions = {
     summary: "Realiza a triagem geral das denúncias e define manualmente o grupamento responsável pelo atendimento.",
     permissions: ["Visualiza todas as denúncias operacionais", "Recebe as novas denúncias aguardando triagem", "Encaminha ou reencaminha denúncias aos grupamentos", "Acompanha o andamento de todos os grupamentos", "Não gerencia usuários, backup ou configurações administrativas"],
   },
+  INTELIGENCIA: {
+    label: "Chefe da Inteligência",
+    summary: "Perfil de coordenação e análise subordinado à Diretoria Operacional, com visão geral das denúncias para apoio de inteligência.",
+    permissions: ["Visualiza todas as denúncias e seus elementos operacionais", "Acompanha histórico, anexos e comunicações", "Pode registrar observações internas e apoiar a análise", "Não realiza a triagem geral", "Não distribui denúncias aos grupamentos ou operadores"],
+  },
   COORDENADOR: {
     label: "Coordenador",
     summary: "Coordena um ou mais grupamentos e distribui as denúncias encaminhadas pela Diretoria aos inspetores/operadores vinculados.",
