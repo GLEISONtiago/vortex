@@ -7,6 +7,7 @@ import { AssignmentPanel } from "./assignment-panel";
 import { historyLabel,resolutionLabel,statusLabel,urgencyLabel } from "../../presentation";
 import { AttachmentGallery } from "./attachment-gallery";
 import { WorkflowPanel } from "./workflow-panel";
+import { GuidedWorkflow } from "./guided-workflow";
 
 export default async function ReportDetail({params}:{params:Promise<{id:string}>}){
  const {id}=await params;const supabase=await createClient();const {data:claimsData}=await supabase.auth.getClaims();const userId=claimsData?.claims?.sub;
@@ -25,13 +26,15 @@ export default async function ReportDetail({params}:{params:Promise<{id:string}>
  const attachmentLinks=await Promise.all((attachments??[]).map(async attachment=>{if(attachment.storage_deleted_at)return{...attachment,signedUrl:null};const {data}=await admin.storage.from("vortex-attachments").createSignedUrl(attachment.storage_path,60*5);return{...attachment,signedUrl:data?.signedUrl??null};}));
  const category=report.vortex_categories as {name?:string}|null;const unit=report.unit as {name?:string}|null;
  const canManage=me?.role==="COORDENADOR";
- const canRoute=me?.role==="ADMIN"||me?.role==="DIRETORIA";
+ const canRoute=me?.role==="DIRETORIA";
  const canReturn=me?.role==="COORDENADOR";
+ const canUpdateStatus=!["DIRETORIA","INTELIGENCIA"].includes(me?.role||"");
 
  return <><Link href="/admin/denuncias" className="text-sm font-bold text-[#0c766d]">← Denúncias</Link>
  <div className="mt-5 flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold tracking-[.14em] text-[#0c766d]">{report.protocol}</p><h1 className="mt-1 text-3xl font-bold">Detalhes da denúncia</h1></div><span className="rounded-full bg-[#d8f1ed] px-3 py-1 text-sm font-bold text-[#0c766d]">{statusLabel(report.status)}</span></div>
+ <GuidedWorkflow role={me?.role} currentStatus={report.status} unitName={unit?.name||null} hasAssignment={Boolean(assignment)} canRoute={canRoute} canAssign={canManage} canUpdateStatus={canUpdateStatus}/>
  <section className="mt-7 grid gap-5 lg:grid-cols-2"><Card title="Identificação"><Item label="Categoria" value={category?.name||"—"}/><Item label="Grupamento" value={unit?.name||"Aguardando triagem da Diretoria"}/><Item label="Urgência" value={urgencyLabel(report.urgency)}/><Item label="Status" value={statusLabel(report.status)}/>{report.status==="FINALIZADA"&&<Item label="Resultado" value={resolutionLabel(report.resolution)}/>}</Card><AssignmentPanel reportId={id} assignment={assignment as never} profiles={(candidates??[]) as never} canManage={canManage} unitId={report.unit_id} unitName={unit?.name||"Aguardando triagem da Diretoria"} units={(units??[]) as never} canRoute={canRoute} canReturn={canReturn}/></section>
- <div className="mt-5"><WorkflowPanel reportId={id} currentStatus={report.status} canUpdateStatus={me?.role!=="DIRETORIA"}/></div>
+ <div className="mt-5"><WorkflowPanel reportId={id} currentStatus={report.status} canUpdateStatus={canUpdateStatus} unitName={unit?.name||null}/></div>
  <Card title="Fato" className="mt-5"><p className="whitespace-pre-wrap text-sm leading-6">{report.description}</p></Card>
  <Card title="Dados do denunciante" className="mt-5">{report.reporter_name||report.reporter_phone||report.reporter_email?<div className="grid gap-2 text-sm"><Item label="Nome" value={report.reporter_name||"Não informado"}/><Item label="Telefone" value={report.reporter_phone||"Não informado"}/><Item label="E-mail" value={report.reporter_email||"Não informado"}/><p className="mt-2 text-xs text-slate-500">Dados informados voluntariamente pelo denunciante.</p></div>:<p className="text-sm text-slate-600">Não informado — denúncia anônima.</p>}</Card>
  <Card title="Histórico" className="mt-5">{history?.length?<ul className="grid gap-3">{history.map(item=><li key={item.id} className="border-l-2 border-[#0c766d] pl-4"><p className="text-sm font-semibold">{historyLabel(item.old_status,item.new_status)}</p>{item.note&&<p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{item.note}</p>}<p className="mt-1 text-xs text-slate-400">{new Date(item.created_at).toLocaleString("pt-BR")}</p></li>)}</ul>:<p className="text-sm text-slate-600">Nenhum histórico disponível.</p>}</Card>
