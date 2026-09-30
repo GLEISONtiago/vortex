@@ -118,6 +118,19 @@ export async function POST(request: Request) {
     }
   }
 
+  await admin.from("vortex_audit_log").insert({
+    actor_id: userId,
+    action: "BACKUP_CONFIRMED",
+    entity_type: "BACKUP_BATCH",
+    entity_id: batch.id,
+    metadata: {
+      label,
+      report_count: reports.length,
+      attachment_count: activeAttachments.length,
+      size_bytes: activeAttachments.reduce((sum, attachment) => sum + Number(attachment.size_bytes ?? 0), 0),
+    },
+  });
+
   return NextResponse.json({
     confirmed: true,
     batchId: batch.id,
