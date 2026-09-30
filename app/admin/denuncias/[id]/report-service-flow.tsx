@@ -22,4 +22,4 @@ export function ReportServiceFlow({protocol,statusLabel,overview,routing,andamen
   </div>
  </div>;
 }
-function Progress({step}:{step:number}){return <ol className="mt-8 grid grid-cols-5 gap-1">{labels.map((label,index)=><li key={label}><button type="button" onClick={()=>{}} tabIndex={-1} className="w-full cursor-default text-left"><div className={`h-1.5 rounded-full ${index<=step?"bg-[#0c766d]":"bg-slate-200"}`}/><span className={`mt-2 hidden text-xs sm:block ${index===step?"font-bold text-[#0c766d]":"text-slate-500"}`}>{index+1}. {label}</span></button></li>)}</ol>;}
+function Progress({step}:{step:number}){return <ol className="mt-8 grid grid-cols-5 gap-1">{labels.map((label,index)=><li key={label}><div><div className={`h-1.5 rounded-full ${index<=step?"bg-[#0c766d]":"bg-slate-200"}`}/><span className={`mt-2 hidden text-xs sm:block ${index===step?"font-bold text-[#0c766d]":"text-slate-500"}`}>{index+1}. {label}</span></div></li>)}</ol>;}
