@@ -1,0 +1,4 @@
+-- Acompanhamento público autenticado por protocolo + PIN.
+-- Retorna somente status, resultado, datas e mensagens vinculadas à própria denúncia.
+-- Também permite resposta do denunciante sem conta, validando novamente protocolo + PIN.
+-- Aplicada em produção via Supabase.
