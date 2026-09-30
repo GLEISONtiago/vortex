@@ -18,3 +18,14 @@ export async function assignReport(reportId: string, assignedTo: string) {
   revalidatePath(`/admin/denuncias/${reportId}`);
   return { message: data === "UNCHANGED" ? "Esta pessoa já é a responsável atual." : "Responsável atribuído com sucesso." };
 }
+
+
+export async function routeReport(reportId: string, unitId: string) {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData?.claims?.sub) return { error: "Sua sessão expirou." };
+  const { error } = await supabase.rpc("vortex_route_report", { p_report_id: reportId, p_unit_id: unitId });
+  if (error) return { error: "Você não tem permissão para alterar o grupamento ou o destino é inválido." };
+  revalidatePath("/admin"); revalidatePath("/admin/denuncias"); revalidatePath(`/admin/denuncias/${reportId}`);
+  return { message: "Denúncia encaminhada ao grupamento selecionado. A atribuição individual anterior, se existia, foi encerrada." };
+}
