@@ -116,6 +116,17 @@ export async function POST(request: Request) {
     );
   }
 
+  await admin.from("vortex_audit_log").insert({
+    actor_id: userId,
+    action: "STORAGE_CLEANUP",
+    entity_type: "STORAGE",
+    metadata: {
+      removed_files: removedIds.length,
+      freed_bytes: freedBytes,
+      retention_days: 90,
+    },
+  });
+
   return NextResponse.json({
     removedFiles: removedIds.length,
     freedBytes,
