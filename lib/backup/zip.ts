@@ -99,6 +99,10 @@ function centralHeader(
   return bytes;
 }
 
+function asBlobPart(bytes: Uint8Array): BlobPart {
+  return bytes.slice().buffer as ArrayBuffer;
+}
+
 export function createZip(files: ZipInput[]) {
   const body: BlobPart[] = [];
   const central: Uint8Array[] = [];
@@ -109,7 +113,7 @@ export function createZip(files: ZipInput[]) {
     const name = encoder.encode(normalizedPath);
     const header = localHeader(name, file.data, file.modifiedAt ?? new Date());
 
-    body.push(header.bytes, file.data);
+    body.push(asBlobPart(header.bytes), asBlobPart(file.data));
     central.push(
       centralHeader(
         name,
@@ -136,7 +140,7 @@ export function createZip(files: ZipInput[]) {
   out.setUint32(16, offset, true);
   out.setUint16(20, 0, true);
 
-  return new Blob([...body, ...central, end], { type: "application/zip" });
+  return new Blob([...body, ...central.map(asBlobPart), asBlobPart(end)], { type: "application/zip" });
 }
 
 export function textBytes(value: string) {
