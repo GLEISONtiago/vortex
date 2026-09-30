@@ -19,8 +19,8 @@ export default async function PublicacoesPage(){
         <label className="text-sm font-semibold">Título<input name="title" required maxLength={160} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" /></label>
         <label className="text-sm font-semibold">Local (opcional)<input name="location" maxLength={160} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" /></label>
       </div>
-      <label className="text-sm font-semibold">Resumo<textarea name="summary" required minLength={10} maxLength={600} rows={3} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" /></label>
-      <label className="text-sm font-semibold">Data e hora<input name="occurredAt" type="datetime-local" defaultValue={localInput(new Date().toISOString())} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" /></label>
+      <label className="text-sm font-semibold">Resumo para o card <span className="font-normal text-slate-500">(até 600 caracteres)</span><textarea name="summary" required minLength={10} maxLength={600} rows={3} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" /></label>
+      <label className="text-sm font-semibold">Texto completo da matéria <span className="font-normal text-slate-500">(sem limite de caracteres)</span><textarea name="content" rows={10} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" placeholder="Escreva aqui o conteúdo completo que será exibido ao abrir a publicação." /></label>\n      <label className="text-sm font-semibold">Data e hora<input name="occurredAt" type="datetime-local" defaultValue={localInput(new Date().toISOString())} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" /></label>
       <PublicationImageUpload />
       <label className="flex items-center gap-2 text-sm font-semibold"><input name="published" type="checkbox" /> Publicar imediatamente</label>
       <button className="w-fit rounded-lg bg-[#0c766d] px-5 py-2.5 text-sm font-bold text-white">Criar publicação</button>
@@ -36,9 +36,9 @@ export default async function PublicacoesPage(){
             <input name="title" required maxLength={160} defaultValue={item.title} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
             <input name="location" maxLength={160} defaultValue={item.location??""} placeholder="Local" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
           </div>
-          <textarea name="summary" required minLength={10} maxLength={600} rows={2} defaultValue={item.summary} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <textarea name="summary" required minLength={10} maxLength={600} rows={2} defaultValue={item.summary} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" /><textarea name="content" rows={8} defaultValue={item.content??item.summary} placeholder="Texto completo da matéria" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
           <input name="occurredAt" type="datetime-local" defaultValue={localInput(item.occurred_at)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-          <PublicationImageUpload initialUrl={item.image_url??""} initialPath={item.image_path??""} />
+          <PublicationImageUpload initialUrl={item.image_url??""} initialPath={item.image_path??""} initialX={Number(item.image_position_x??50)} initialY={Number(item.image_position_y??50)} />
           <label className="flex items-center gap-2 text-sm"><input name="published" type="checkbox" defaultChecked={item.published} /> Publicada</label>
           <div className="flex flex-wrap gap-2"><button className="rounded-lg bg-[#0c766d] px-4 py-2 text-sm font-bold text-white">Salvar alterações</button><button formAction={deletePublicUpdate} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-700">Excluir</button></div>
         </form>)}
