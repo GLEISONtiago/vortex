@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     .from("vortex_reports")
     .select("id")
     .eq("status", "FINALIZADA")
-    .lt("created_at", cutoff)
+    .lt("updated_at", cutoff)
     .limit(2000);
 
   if (reportsError) {
