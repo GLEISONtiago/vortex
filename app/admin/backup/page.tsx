@@ -1,6 +1,7 @@
 import { createAdminClient } from "../../../lib/supabase/admin";
 import { requireAdmin } from "../../../lib/auth/require-admin";
 import { BackupClient } from "./backup-client";
+import { RestoreBackup } from "./restore-backup";
 
 const maxPartBytes = 60 * 1024 * 1024;
 const maxReportsPerPart = 30;
@@ -165,7 +166,7 @@ export default async function BackupPage() {
       const report = reportById.get(attachment.report_id);
       if (
         report
-        && ["CONCLUIDA", "IMPROCEDENTE"].includes(report.status)
+        && report.status === "FINALIZADA"
         && new Date(report.created_at).getTime() < cutoff
         && attachment.backed_up_at
         && !attachment.storage_deleted_at
@@ -206,5 +207,6 @@ export default async function BackupPage() {
         createdAt: batch.created_at,
       }))}
     />
+    <div className="mt-8"><RestoreBackup /></div>
   </div>;
 }
