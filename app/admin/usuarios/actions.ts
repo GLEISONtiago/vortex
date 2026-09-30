@@ -19,7 +19,7 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
   const fullName = value(formData, "fullName"); const email = value(formData, "email").toLowerCase(); const password = value(formData, "password"); const role = roleValue(formData); const active = formData.get("active") === "on";
   if (!fullName || fullName.length > 150) return { error: "Informe um nome completo válido." };
   if (!/^\S+@\S+\.\S+$/.test(email) || email.length > 320) return { error: "Informe um e-mail válido." };
-  if (password.length < 8) return { error: "A senha temporária deve ter pelo menos 8 caracteres." };
+  if (password.length < 10) return { error: "A senha temporária deve ter pelo menos 10 caracteres." };
   if (!role) return { error: "Selecione um perfil válido." };
 
   let supabase; try { supabase = createAdminClient(); } catch { return { error: "A configuração administrativa não está disponível." }; }
