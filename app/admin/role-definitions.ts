@@ -6,12 +6,12 @@ export const roleDefinitions = {
   },
   COORDENADOR: {
     label: "Coordenador",
-    summary: "Gerencia a operação: acompanha a fila e distribui ou redistribui denúncias aos operadores.",
-    permissions: ["Visualiza a fila operacional", "Atribui e redistribui denúncias", "Acompanha andamento e histórico", "Pode atualizar o fluxo e registrar observações", "Não gerencia usuários nem armazenamento"],
+    summary: "Coordena um ou mais grupamentos: acompanha a fila da sua unidade e distribui denúncias aos inspetores/operadores vinculados.",
+    permissions: ["Visualiza as denúncias dos grupamentos que coordena", "Atribui e redistribui denúncias aos operadores da unidade", "Pode receber permissão específica de triagem geral", "Acompanha andamento e histórico", "Não gerencia usuários nem armazenamento"],
   },
   OPERADOR: {
     label: "Operador",
-    summary: "Executa a análise e o atendimento das denúncias atribuídas ao seu usuário.",
+    summary: "Atua como inspetor/atendente operacional e executa as denúncias atribuídas ao seu usuário dentro do grupamento.",
     permissions: ["Visualiza denúncias atribuídas a si", "Consulta detalhes, localização, histórico e anexos", "Atualiza o andamento permitido", "Registra observações e mensagens", "Não distribui denúncias nem administra usuários"],
   },
 } as const;
