@@ -1,0 +1,10 @@
+"use client";
+import Link from "next/link";
+import { useState,type FormEvent } from "react";
+import { BrandMark } from "../components/brand-mark";
+import { createClient } from "../../lib/supabase/client";
+export default function RecoverPasswordPage(){
+ const [email,setEmail]=useState(""),[message,setMessage]=useState(""),[busy,setBusy]=useState(false);
+ async function submit(e:FormEvent){e.preventDefault();setBusy(true);setMessage("");const redirectTo=`${window.location.origin}/auth/callback?next=/redefinir-senha`;await createClient().auth.resetPasswordForEmail(email,{redirectTo});setMessage("Se existir uma conta ativa para esse e-mail, você receberá as instruções de recuperação.");setBusy(false);}
+ return <main className="min-h-screen bg-[#f4f7f8] text-[#102b42]"><header className="bg-[#092940]"><div className="mx-auto max-w-6xl px-5 py-4"><BrandMark /></div></header><div className="mx-auto flex max-w-md px-5 py-14"><form onSubmit={submit} className="w-full rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8"><p className="text-xs font-bold tracking-[.16em] text-[#0c766d]">RECUPERAÇÃO DE ACESSO</p><h1 className="mt-2 text-3xl font-bold">Esqueci minha senha</h1><p className="mt-3 text-sm leading-6 text-slate-600">Informe o e-mail usado no VÓRTEX. Por segurança, a resposta é a mesma mesmo quando o endereço não está cadastrado.</p><label className="mt-7 block text-sm font-semibold">E-mail<input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-3" /></label>{message&&<p className="mt-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}<button disabled={busy} className="mt-6 min-h-11 w-full rounded-lg bg-[#0c766d] text-sm font-bold text-white disabled:opacity-60">{busy?"Enviando...":"Enviar instruções"}</button><Link href="/login" className="mt-5 block text-center text-sm font-semibold text-[#0c766d]">Voltar ao login</Link></form></div></main>;
+}
