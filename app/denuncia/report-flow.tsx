@@ -35,7 +35,7 @@ export function ReportFlow() {
         body: JSON.stringify({
           uploadToken: submission.upload_token,
           attachmentToken: upload.attachmentToken,
-          fileName: preparedFile.name,
+          fileName: upload.file.name,
           mimeType: preparedFile.type,
           size: preparedFile.size,
         }),
