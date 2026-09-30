@@ -1,7 +1,7 @@
 "use client";
 import { useEffect,useState,type ReactNode } from "react";
 
-const labels=["Conferir denúncia","Encaminhar","Atender","Comunicar","Finalizar"];
+const labels=["Conferir","Encaminhar","Atender","Comunicar","Finalizar"];
 
 export function ReportServiceFlow({
  protocol,statusLabel,overview,routing,handling,communication,finalization,history,initialStep=0,completed=[false,false,false,false,false],alerts=[]
@@ -14,14 +14,18 @@ export function ReportServiceFlow({
  const contents=[overview,routing,handling,communication,finalization];
  const goHistory=()=>document.getElementById("historico-atendimento")?.scrollIntoView({behavior:"smooth",block:"start"});
  return <div className="mx-auto max-w-5xl">
-  <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
-   <div><p className="text-xs font-bold tracking-[.16em] text-[#0c766d]">ATENDIMENTO DA DENÚNCIA · {protocol}</p><h1 className="mt-2 text-3xl font-bold text-[#102b42]">Conduza o atendimento passo a passo</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">O VÓRTEX abre na etapa mais adequada ao estado atual da denúncia. As etapas concluídas são indicadas automaticamente.</p></div>
-   <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-[#d8f1ed] px-3 py-1.5 text-sm font-bold text-[#0c766d]">{statusLabel}</span><button type="button" onClick={goHistory} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700">Ver histórico</button></div>
-  </div>
+  <section className="mt-5 overflow-hidden border border-[#173b57] bg-[#0b2a43] text-white shadow-sm">
+   <div className="border-l-4 border-[#e7b548] px-5 py-5 sm:px-6">
+    <div className="flex flex-wrap items-end justify-between gap-4">
+     <div><p className="text-[10px] font-black tracking-[.2em] text-[#74d5c9]">GCMJP · CENTRAL OPERACIONAL</p><p className="mt-2 text-xs font-bold tracking-[.15em] text-slate-300">PROTOCOLO {protocol}</p><h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Fluxo operacional da denúncia</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Conferência, encaminhamento, atendimento, comunicação e encerramento em uma única sequência operacional.</p></div>
+     <div className="flex flex-wrap items-center gap-2"><span className="rounded-md bg-[#0c766d] px-3 py-1.5 text-sm font-black text-white ring-1 ring-white/15">{statusLabel}</span><button type="button" onClick={goHistory} className="rounded-md border border-white/20 bg-white/5 px-3 py-2 text-xs font-bold text-white hover:bg-white/10">Histórico</button></div>
+    </div>
+   </div>
+  </section>
   {alerts.length>0&&<div className="mt-5 grid gap-2">{alerts.map(alert=><p key={alert} className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">{alert}</p>)}</div>}
   <Progress step={step} completed={completed}/>
   <div className="mt-8">
-   <div className="mb-4"><p className="text-xs font-bold tracking-[.14em] text-[#0c766d]">ETAPA {step+1} DE {labels.length}</p><h2 className="mt-1 text-2xl font-bold text-[#102b42]">{labels[step]}</h2></div>
+   <div className="mb-4 border-l-4 border-[#0c766d] pl-4"><p className="text-[10px] font-black tracking-[.16em] text-slate-500">ETAPA OPERACIONAL {step+1} DE {labels.length}</p><h2 className="mt-1 text-2xl font-black text-[#102b42]">{labels[step]}</h2></div>
    {contents[step]}
    <div className="mt-6 flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-between">
     <button type="button" onClick={()=>setStep(s=>Math.max(0,s-1))} disabled={step===0} className="min-h-11 px-4 text-sm font-semibold text-slate-700 disabled:opacity-30">Voltar</button>
