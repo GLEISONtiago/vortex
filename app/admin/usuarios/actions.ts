@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "../../../lib/auth/require-admin";
 import { createAdminClient } from "../../../lib/supabase/admin";
 
-const roles = ["ADMIN", "COORDENADOR", "OPERADOR"] as const;
+const roles = ["ADMIN", "DIRETORIA", "COORDENADOR", "OPERADOR"] as const;
 type Role = (typeof roles)[number];
 type ActionResult = { error?: string; success?: string };
 
