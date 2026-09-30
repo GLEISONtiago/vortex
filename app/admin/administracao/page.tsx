@@ -16,7 +16,7 @@ export default async function AdministrationPage() {
     <h1 className="mt-2 text-3xl font-bold">Administração do sistema</h1>
     <p className="mt-2 text-sm text-slate-600">Visão central das funções, acessos e atividades administrativas do VÓRTEX.</p>
 
-    <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
       {vortexRoles.map((role) => <div key={role} className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><p className="text-sm font-semibold text-slate-600">{roleDefinitions[role].label}</p><p className="mt-2 text-3xl font-bold">{active.filter((profile) => profile.role === role).length}</p><p className="mt-1 text-xs text-slate-500">usuário(s) ativo(s)</p></div>)}
     </div>
 
