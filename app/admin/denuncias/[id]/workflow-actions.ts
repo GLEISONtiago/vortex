@@ -2,7 +2,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "../../../../lib/supabase/server";
 
-const allowedStatuses = ["NOVA","EM_ANALISE","ENCAMINHADA","EM_ATENDIMENTO","CONCLUIDA","IMPROCEDENTE"];
+const allowedStatuses = ["NOVA","EM_ANALISE","EM_ATENDIMENTO","FINALIZADA"];
+const allowedResolutions = ["PROCEDENTE","IMPROCEDENTE","RESOLVIDA","ENCAMINHADA_OUTRO_ORGAO","NAO_FOI_POSSIVEL_AVERIGUAR"];
 
 async function context(reportId: string) {
   const supabase = await createClient();
@@ -17,8 +18,9 @@ async function context(reportId: string) {
   return { supabase, userId, me, report };
 }
 
-export async function updateReportStatus(reportId: string, newStatus: string, note: string) {
+export async function updateReportStatus(reportId: string, newStatus: string, note: string, resolution?: string) {
   if (!allowedStatuses.includes(newStatus)) return { error: "Status inválido." };
+  if (newStatus === "FINALIZADA" && !allowedResolutions.includes(resolution || "")) return { error: "Selecione o resultado da finalização." };
   const ctx = await context(reportId); if ("error" in ctx) return { error: ctx.error };
   const { supabase, userId, me, report } = ctx;
   const canManage = ["ADMIN","COORDENADOR"].includes(me!.role);
@@ -27,9 +29,9 @@ export async function updateReportStatus(reportId: string, newStatus: string, no
     if (!assignment) return { error: "Somente o responsável atual pode atualizar esta denúncia." };
   }
   if (report!.status === newStatus) return { message: "A denúncia já está neste status." };
-  const { error } = await supabase.from("vortex_reports").update({ status: newStatus, updated_at: new Date().toISOString() }).eq("id", reportId);
+  const { error } = await supabase.from("vortex_reports").update({ status: newStatus, resolution: newStatus === "FINALIZADA" ? resolution : null, updated_at: new Date().toISOString() }).eq("id", reportId);
   if (error) return { error: "Não foi possível atualizar o status." };
-  await supabase.from("vortex_report_history").insert({ report_id: reportId, old_status: report!.status, new_status: newStatus, note: note.trim() || null, changed_by: userId });
+  await supabase.from("vortex_report_history").insert({ report_id: reportId, old_status: report!.status, new_status: newStatus, note: newStatus === "FINALIZADA" ? `[Resultado: ${resolution}]${note.trim() ? ` ${note.trim()}` : ""}` : note.trim() || null, changed_by: userId });
   revalidatePath("/admin"); revalidatePath("/admin/denuncias"); revalidatePath(`/admin/denuncias/${reportId}`);
   return { message: "Status atualizado com sucesso." };
 }
