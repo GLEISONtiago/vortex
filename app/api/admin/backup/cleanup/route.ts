@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   const { data: reports, error: reportsError } = await admin
     .from("vortex_reports")
     .select("id")
-    .in("status", ["CONCLUIDA", "IMPROCEDENTE"])
+    .eq("status", "FINALIZADA")
     .lt("created_at", cutoff)
     .limit(2000);
 
