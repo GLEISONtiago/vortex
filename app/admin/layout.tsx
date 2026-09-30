@@ -38,7 +38,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       <nav className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-white p-3 md:min-h-[calc(100vh-72px)] md:flex-col md:border-b-0 md:border-r">
         <Link className="rounded-lg px-3 py-2 text-sm font-semibold hover:bg-[#d8f1ed]" href="/admin">Dashboard</Link>
         <Link className="rounded-lg px-3 py-2 text-sm font-semibold hover:bg-[#d8f1ed]" href="/admin/denuncias">Denúncias</Link>
-        {profile.role === "ADMIN" && <><Link className="rounded-lg px-3 py-2 text-sm font-semibold hover:bg-[#d8f1ed]" href="/admin/usuarios">Usuários</Link><Link className="rounded-lg px-3 py-2 text-sm font-semibold hover:bg-[#d8f1ed]" href="/admin/backup">Backup e armazenamento</Link></>}
+        {profile.role === "ADMIN" && <><Link className="rounded-lg px-3 py-2 text-sm font-semibold hover:bg-[#d8f1ed]" href="/admin/usuarios">Usuários</Link><Link className="rounded-lg px-3 py-2 text-sm font-semibold hover:bg-[#d8f1ed]" href="/admin/administracao">Administração</Link><Link className="rounded-lg px-3 py-2 text-sm font-semibold hover:bg-[#d8f1ed]" href="/admin/backup">Backup e armazenamento</Link></>}
       </nav>
       <main className="min-w-0 p-5 sm:p-8">{storageAlert && storageAlert.warningLevel !== "OK" && <Link href="/admin/backup" className={`mb-6 block rounded-xl border p-4 text-sm font-semibold ${storageAlert.warningLevel === "CRITICAL" ? "border-red-300 bg-red-50 text-red-900" : "border-amber-300 bg-amber-50 text-amber-900"}`}>Armazenamento em {storageAlert.usagePercent.toFixed(1)}%. Faça um backup e revise o espaço disponível.</Link>}{children}</main>
     </div>
