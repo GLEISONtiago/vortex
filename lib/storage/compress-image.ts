@@ -1,10 +1,10 @@
 "use client";
 
 const allowedInputTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const maximumOriginalBytes = 20 * 1024 * 1024;
-const targetBytes = 1 * 1024 * 1024;
-const maximumOutputBytes = 2 * 1024 * 1024;
-const maximumDimension = 1920;
+const maximumOriginalBytes = 40 * 1024 * 1024;
+const targetBytes = 750 * 1024;
+const maximumOutputBytes = 1536 * 1024;
+const maximumDimension = 2048;
 const minimumQuality = 0.52;
 
 function loadImage(file: File) {
@@ -57,7 +57,7 @@ export async function compressImage(file: File) {
   }
 
   if (file.size > maximumOriginalBytes) {
-    throw new Error("A imagem original pode ter no máximo 20 MB.");
+    throw new Error("A imagem original pode ter no máximo 40 MB.");
   }
 
   const image = await loadImage(file);
