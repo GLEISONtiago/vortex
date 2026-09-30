@@ -41,7 +41,7 @@ type BackupAttachment = {
   created_at: string;
   backed_up_at: string | null;
   storage_deleted_at: string | null;
-  signedUrl: string | null;
+  signedUrl?: string | null;
   backup_file?: string | null;
 };
 
