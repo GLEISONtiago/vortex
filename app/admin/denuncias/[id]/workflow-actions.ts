@@ -29,9 +29,8 @@ export async function updateReportStatus(reportId: string, newStatus: string, no
     if (!assignment) return { error: "Somente o responsável atual pode atualizar esta denúncia." };
   }
   if (report!.status === newStatus) return { message: "A denúncia já está neste status." };
-  const { error } = await supabase.from("vortex_reports").update({ status: newStatus, resolution: newStatus === "FINALIZADA" ? resolution : null, updated_at: new Date().toISOString() }).eq("id", reportId);
+  const { error } = await supabase.rpc("vortex_update_report_status", { p_report_id: reportId, p_new_status: newStatus, p_resolution: newStatus === "FINALIZADA" ? resolution : null, p_note: note.trim() || null });
   if (error) return { error: "Não foi possível atualizar o status." };
-  await supabase.from("vortex_report_history").insert({ report_id: reportId, old_status: report!.status, new_status: newStatus, note: newStatus === "FINALIZADA" ? `[Resultado: ${resolution}]${note.trim() ? ` ${note.trim()}` : ""}` : note.trim() || null, changed_by: userId });
   revalidatePath("/admin"); revalidatePath("/admin/denuncias"); revalidatePath(`/admin/denuncias/${reportId}`);
   return { message: "Status atualizado com sucesso." };
 }
@@ -40,7 +39,7 @@ export async function addInternalNote(reportId: string, note: string) {
   const clean = note.trim(); if (clean.length < 3) return { error: "Informe uma observação válida." };
   const ctx = await context(reportId); if ("error" in ctx) return { error: ctx.error };
   const { supabase, userId, report } = ctx;
-  const { error } = await supabase.from("vortex_report_history").insert({ report_id: reportId, old_status: report!.status, new_status: report!.status, note: clean, changed_by: userId });
+  const { error } = await supabase.rpc("vortex_add_internal_note", { p_report_id: reportId, p_note: clean });
   if (error) return { error: "Não foi possível registrar a observação." };
   revalidatePath(`/admin/denuncias/${reportId}`); return { message: "Observação registrada no histórico." };
 }
@@ -49,7 +48,7 @@ export async function sendReporterMessage(reportId: string, message: string) {
   const clean = message.trim(); if (clean.length < 2) return { error: "Digite uma mensagem." };
   const ctx = await context(reportId); if ("error" in ctx) return { error: ctx.error };
   const { supabase } = ctx;
-  const { error } = await supabase.from("vortex_messages").insert({ report_id: reportId, sender_type: "STAFF", message: clean });
+  const { error } = await supabase.rpc("vortex_send_staff_message", { p_report_id: reportId, p_message: clean });
   if (error) return { error: "Não foi possível enviar a mensagem." };
   revalidatePath(`/admin/denuncias/${reportId}`); return { message: "Mensagem disponibilizada no acompanhamento da denúncia." };
 }
