@@ -10,7 +10,7 @@ export default async function TriagePage(){
  const id=claims?.claims?.sub;
  if(!id)redirect("/login");
  const {data:me}=await supabase.from("vortex_profiles").select("role,active").eq("id",id).maybeSingle();
- if(!me?.active||!["ADMIN","DIRETORIA"].includes(me.role))redirect("/admin");
+ if(!me?.active||me.role!=="DIRETORIA")redirect("/admin");
  const [{data:reports},{data:units}]=await Promise.all([
   supabase.from("vortex_reports").select("id,protocol,urgency,neighborhood,created_at,description,vortex_categories(name)").is("unit_id",null).order("created_at",{ascending:true}),
   supabase.from("vortex_units").select("id,name").eq("active",true).order("name")
