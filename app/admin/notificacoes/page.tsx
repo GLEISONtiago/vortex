@@ -1,4 +1,33 @@
-import Link from "next/link";
 import { createClient } from "../../../lib/supabase/server";
-import { markAllNotificationsRead, markNotificationRead } from "./actions";
-export default async function NotificationsPage(){const s=await createClient();const {data}=await s.from("vortex_notifications").select("id,report_id,notification_type,title,body,read_at,created_at").order("created_at",{ascending:false}).limit(100);const rows=data??[];const unread=rows.filter(n=>!n.read_at).length;return <><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold tracking-[.16em] text-[#0c766d]">CENTRAL DE AVISOS</p><h1 className="mt-2 text-3xl font-bold">Notificações</h1><p className="mt-2 text-sm text-slate-600">{unread ? unread+" notificação(ões) não lida(s)." : "Você está em dia com os avisos."}</p></div>{unread>0&&<form action={markAllNotificationsRead}><button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold">Marcar todas como lidas</button></form>}</div><div className="mt-7 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">{rows.length?<ul className="divide-y divide-slate-100">{rows.map(n=><li key={n.id} className={"p-4 sm:p-5 "+(!n.read_at?"bg-[#eef9f7]":"bg-white")}><div className="flex gap-3"><span className={"mt-1 size-2.5 shrink-0 rounded-full "+(!n.read_at?"bg-[#0c766d]":"bg-slate-300")}/><div className="min-w-0 flex-1"><div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-bold">{n.title||"Notificação"}</p><p className="mt-1 text-sm text-slate-600">{n.body}</p></div><time className="text-xs text-slate-400">{new Date(n.created_at).toLocaleString("pt-BR")}</time></div><div className="mt-3 flex flex-wrap gap-3">{n.report_id&&<Link href={"/admin/denuncias/"+n.report_id} className="text-sm font-bold text-[#0c766d] hover:underline">Abrir denúncia</Link>}{!n.read_at&&<form action={markNotificationRead.bind(null,n.id)}><button className="text-sm font-semibold text-slate-500 hover:text-slate-800">Marcar como lida</button></form>}</div></div></div></li>)}</ul>:<p className="p-8 text-center text-sm text-slate-500">Nenhuma notificação por enquanto.</p>}</div></>}
+import { markAllNotificationsRead, markNotificationRead, openNotification } from "./actions";
+
+export default async function NotificationsPage(){
+ const s=await createClient();
+ const {data:claims}=await s.auth.getClaims();
+ const uid=claims?.claims?.sub;
+ const {data}=uid
+  ? await s.from("vortex_notifications").select("id,report_id,notification_type,title,body,read_at,created_at").eq("recipient_id",uid).order("created_at",{ascending:false}).limit(100)
+  : {data:[]};
+ const rows=data??[];
+ const unread=rows.filter(n=>!n.read_at).length;
+
+ return <>
+  <div className="flex flex-wrap items-end justify-between gap-4">
+   <div><p className="text-xs font-bold tracking-[.16em] text-[#0c766d]">CENTRAL DE AVISOS</p><h1 className="mt-2 text-3xl font-bold">Notificações</h1><p className="mt-2 text-sm text-slate-600">{unread?unread+" notificação(ões) não lida(s).":"Você está em dia com os avisos."}</p></div>
+   {unread>0&&<form action={markAllNotificationsRead}><button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold hover:bg-slate-50">Marcar todas como lidas</button></form>}
+  </div>
+  <div className="mt-7 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+   {rows.length?<ul className="divide-y divide-slate-100">{rows.map(n=><li key={n.id} className={"p-4 sm:p-5 "+(!n.read_at?"bg-[#eef9f7]":"bg-white")}>
+    <div className="flex gap-3"><span className={"mt-1 size-2.5 shrink-0 rounded-full "+(!n.read_at?"bg-[#0c766d]":"bg-slate-300")}/>
+     <div className="min-w-0 flex-1">
+      <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-bold">{n.title||"Notificação"}</p><p className="mt-1 text-sm text-slate-600">{n.body}</p></div><time className="text-xs text-slate-400">{new Intl.DateTimeFormat("pt-BR",{dateStyle:"short",timeStyle:"short",timeZone:"America/Sao_Paulo"}).format(new Date(n.created_at))}</time></div>
+      <div className="mt-3 flex flex-wrap gap-3">
+       {n.report_id&&<form action={openNotification.bind(null,n.id,n.report_id)}><button className="text-sm font-bold text-[#0c766d] hover:underline">Abrir denúncia</button></form>}
+       {!n.read_at&&<form action={markNotificationRead.bind(null,n.id)}><button className="text-sm font-semibold text-slate-500 hover:text-slate-800">Marcar como lida</button></form>}
+      </div>
+     </div>
+    </div>
+   </li>)}</ul>:<p className="p-8 text-center text-sm text-slate-500">Nenhuma notificação por enquanto.</p>}
+  </div>
+ </>;
+}
