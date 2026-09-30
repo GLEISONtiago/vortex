@@ -243,7 +243,10 @@ export function BackupClient({
         let attachmentNumber = 0;
         for (const attachment of report.attachments) {
           attachmentNumber += 1;
-          if (!attachment.signedUrl) continue;
+          if (!attachment.signedUrl) {
+            if (attachment.storage_deleted_at) continue;
+            throw new Error(`A imagem ${attachment.original_name || attachment.id} não pôde ser incluída. O backup foi cancelado para evitar uma cópia incompleta.`);
+          }
 
           imageIndex += 1;
           setMessage(`Baixando imagem ${imageIndex} de ${imageTotal} para montar o arquivo...`);
