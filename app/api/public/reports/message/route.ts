@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "../../../../lib/supabase/admin";
+import { createAdminClient } from "../../../../../lib/supabase/admin";
 export const runtime = "nodejs";
 export async function POST(request:Request){
   let b:{protocol?:unknown;pin?:unknown;message?:unknown}; try{b=await request.json();}catch{return NextResponse.json({error:"Solicitação inválida."},{status:400});}
