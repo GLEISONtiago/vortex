@@ -54,6 +54,7 @@ export async function sendReporterMessage(reportId: string, message: string, wai
   if (waitForReply) {
     const { error: waitingError } = await supabase.rpc("vortex_set_awaiting_reporter_info", { p_report_id: reportId, p_waiting: true });
     if (waitingError) return { error: "A mensagem foi enviada, mas não foi possível marcar a denúncia como aguardando complemento." };
+    await supabase.rpc("vortex_add_internal_note", { p_report_id: reportId, p_note: "Complemento solicitado ao denunciante pela equipe responsável pela etapa atual." });
   }
   revalidatePath("/admin"); revalidatePath("/admin/denuncias"); revalidatePath(`/admin/denuncias/${reportId}`);
   return { message: waitForReply ? "Mensagem enviada. A denúncia está aguardando complemento do denunciante." : "Mensagem disponibilizada no acompanhamento da denúncia." };
