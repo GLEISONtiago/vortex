@@ -49,3 +49,25 @@ export async function setOperationalPriority(reportId:string,priority:string){
   if(error)return{error:"Não foi possível definir a prioridade operacional."};
   refresh(reportId);return{message:"Prioridade operacional atualizada."};
 }
+
+export async function classifyAndRouteReport(reportId:string,unitId:string,priority:string){
+ if(!unitId||!["LOW","MEDIUM","HIGH"].includes(priority))return{error:"Selecione prioridade e grupamento."};
+ const supabase=await createClient();
+ const {data:claimsData}=await supabase.auth.getClaims();
+ const userId=claimsData?.claims?.sub;
+ if(!userId)return{error:"Sua sessão expirou."};
+ const {data:manager}=await supabase.from("vortex_profiles").select("role,active").eq("id",userId).maybeSingle();
+ if(!manager?.active||!["ADMIN","DIRETORIA"].includes(manager.role))return{error:"Sem permissão para realizar a triagem."};
+ const {data:report,error:readError}=await supabase.from("vortex_reports").select("operational_priority,unit_id").eq("id",reportId).single();
+ if(readError||!report)return{error:"Denúncia não encontrada."};
+ if(report.operational_priority!==priority){
+  const {error}=await supabase.rpc("vortex_set_operational_priority",{p_report_id:reportId,p_priority:priority});
+  if(error)return{error:"Não foi possível registrar a prioridade."};
+ }
+ if(report.unit_id!==unitId){
+  const {error}=await supabase.rpc("vortex_route_report",{p_report_id:reportId,p_unit_id:unitId});
+  if(error)return{error:"Não foi possível encaminhar. Confira o grupamento e tente novamente."};
+ }
+ refresh(reportId);
+ return{message:report.unit_id===unitId?"Triagem confirmada.":"Denúncia classificada e encaminhada à coordenação."};
+}
