@@ -44,7 +44,7 @@ export async function setOperationalPriority(reportId:string,priority:string){
   const supabase=await createClient();const {data:claimsData}=await supabase.auth.getClaims();const userId=claimsData?.claims?.sub;
   if(!userId)return{error:"Sua sessão expirou."};
   const {data:manager}=await supabase.from("vortex_profiles").select("role,active").eq("id",userId).maybeSingle();
-  if(!manager?.active||manager.role!=="DIRETORIA")return{error:"Somente a Diretoria Operacional pode definir a prioridade operacional."};
+  if(!manager?.active||!["ADMIN","DIRETORIA"].includes(manager.role))return{error:"Somente a Administração ou a Diretoria Operacional pode definir a prioridade operacional."};
   const {error}=await supabase.rpc("vortex_set_operational_priority",{p_report_id:reportId,p_priority:priority});
   if(error)return{error:"Não foi possível definir a prioridade operacional."};
   refresh(reportId);return{message:"Prioridade operacional atualizada."};
