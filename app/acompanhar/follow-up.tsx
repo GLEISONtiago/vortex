@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { BrandMark } from "../components/brand-mark";
 import { FileText, Shield } from "../components/icons";
-import { createClient } from "../../lib/supabase/client";
 
 const fieldClass = "mt-2 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#0c766d] focus:ring-2 focus:ring-[#0c766d]/15";
 
@@ -23,6 +22,15 @@ const statusLabels: Record<PublicReport["status"], string> = {
   FINALIZADA: "Finalizada",
 };
 
+async function fetchPublicReport(protocol:string,pin:string){
+  const response=await fetch("/api/public/reports/lookup",{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({protocol:protocol.trim(),pin}),
+  });
+  if(!response.ok)return null;
+  return await response.json() as PublicReport;
+}
+
 export function FollowUp() {
   const [protocol, setProtocol] = useState("");
   const [pin, setPin] = useState("");
@@ -39,49 +47,35 @@ export function FollowUp() {
       setResult(null);
       return;
     }
-
-    setError("");
-    setResult(null);
-    setLoading(true);
-
-    const { data, error: rpcError } = await createClient().rpc("vortex_get_public_report_by_protocol_pin", {
-      p_protocol: protocol.trim(),
-      p_tracking_pin: pin,
-    });
-
+    setError(""); setResult(null); setLoading(true);
+    const report=await fetchPublicReport(protocol,pin);
     setLoading(false);
-
-    if (rpcError || !data?.[0]) {
-      setError("Não foi possível localizar uma denúncia com esses dados.");
-      return;
-    }
-
-    setResult(data[0] as PublicReport);
+    if(!report){setError("Não foi possível localizar uma denúncia com esses dados.");return;}
+    setResult(report);
   };
 
-  const refreshMessages = async () => { if (!result) return; const refreshed=await createClient().rpc("vortex_get_public_report_by_protocol_pin",{p_protocol:protocol.trim(),p_tracking_pin:pin}); if(refreshed.data?.[0]) setResult(refreshed.data[0] as PublicReport); };
+  const refreshMessages = async () => { if (!result) return; const refreshed=await fetchPublicReport(protocol,pin); if(refreshed) setResult(refreshed); };
 
   useEffect(() => {
     if (!result?.protocol || result.status === "FINALIZADA" || !protocol.trim() || !/^[0-9]{6}$/.test(pin)) return;
     const timer = window.setInterval(async () => {
       if (document.visibilityState !== "visible") return;
-      const refreshed = await createClient().rpc("vortex_get_public_report_by_protocol_pin", {
-        p_protocol: protocol.trim(),
-        p_tracking_pin: pin,
-      });
-      if (refreshed.data?.[0]) setResult(refreshed.data[0] as PublicReport);
+      const refreshed=await fetchPublicReport(protocol,pin);
+      if(refreshed) setResult(refreshed);
     }, 10000);
     return () => window.clearInterval(timer);
   }, [result?.protocol, result?.status, protocol, pin]);
   const sendReply = async () => {
     if (!result || result.status === "FINALIZADA" || reply.trim().length < 2) return;
     setSending(true); setMessageError("");
-    const supabase=createClient();
-    const {data,error:rpcError}=await supabase.rpc("vortex_send_public_report_message",{p_protocol:protocol.trim(),p_tracking_pin:pin,p_message:reply.trim()});
-    if(rpcError||!data){setMessageError("Não foi possível enviar a mensagem. Tente novamente.");setSending(false);return;}
+    const response=await fetch("/api/public/reports/message",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({protocol:protocol.trim(),pin,message:reply.trim()}),
+    });
+    if(!response.ok){setMessageError("Não foi possível enviar a mensagem. Tente novamente.");setSending(false);return;}
     setReply("");
-    const refreshed=await supabase.rpc("vortex_get_public_report_by_protocol_pin",{p_protocol:protocol.trim(),p_tracking_pin:pin});
-    if(refreshed.data?.[0]) setResult(refreshed.data[0] as PublicReport);
+    const refreshed=await fetchPublicReport(protocol,pin);
+    if(refreshed) setResult(refreshed);
     setSending(false);
   };
 
