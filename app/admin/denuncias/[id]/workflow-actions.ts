@@ -47,14 +47,14 @@ export async function addInternalNote(reportId: string, note: string) {
 export async function sendReporterMessage(reportId: string, message: string, waitForReply = false) {
   const clean = message.trim(); if (clean.length < 2) return { error: "Digite uma mensagem." };
   const ctx = await context(reportId); if ("error" in ctx) return { error: ctx.error };
-  const { supabase, report } = ctx;
+  const { supabase, report, me } = ctx;
   if (report!.status === "FINALIZADA") return { error: "Esta denúncia já foi finalizada. A conversa está disponível somente para consulta." };
   const { error } = await supabase.rpc("vortex_send_staff_message", { p_report_id: reportId, p_message: clean });
   if (error) return { error: "Não foi possível enviar a mensagem." };
   if (waitForReply) {
     const { error: waitingError } = await supabase.rpc("vortex_set_awaiting_reporter_info", { p_report_id: reportId, p_waiting: true });
     if (waitingError) return { error: "A mensagem foi enviada, mas não foi possível marcar a denúncia como aguardando complemento." };
-    await supabase.rpc("vortex_add_internal_note", { p_report_id: reportId, p_note: "Complemento solicitado ao denunciante pela equipe responsável pela etapa atual." });
+    await supabase.rpc("vortex_add_internal_note", { p_report_id: reportId, p_note: ["ADMIN","DIRETORIA"].includes(me!.role) ? "Triagem solicitou complemento ao denunciante." : "Responsável pelo atendimento solicitou complemento ao denunciante." });
   }
   revalidatePath("/admin"); revalidatePath("/admin/denuncias"); revalidatePath(`/admin/denuncias/${reportId}`);
   return { message: waitForReply ? "Mensagem enviada. A denúncia está aguardando complemento do denunciante." : "Mensagem disponibilizada no acompanhamento da denúncia." };
