@@ -104,9 +104,29 @@ export function ReportFlow() {
     if (!submission) {
       const eventAt = `${form.date}T${form.time || "12:00"}:00-03:00`;
       const address = [form.address.trim(), form.number.trim()].filter(Boolean).join(", ");
-      const { data, error: rpcError } = await createClient().rpc("vortex_submit_public_report_with_upload", { p_category_slug: form.category, p_description: form.description.trim(), p_urgency: form.urgency, p_address: address || null, p_neighborhood: form.district.trim() || null, p_reference_point: form.reference.trim() || null, p_latitude: form.latitude, p_longitude: form.longitude, p_event_at: eventAt, p_tracking_pin: form.trackingPin, p_reporter_name: form.wantsIdentification ? form.reporterName.trim() || null : null, p_reporter_phone: form.wantsIdentification ? form.reporterPhone.trim() || null : null, p_reporter_email: form.wantsIdentification ? form.reporterEmail.trim() || null : null });
-      if (rpcError || !data?.[0]?.protocol || !data[0]?.upload_token) { setSubmitting(false); setError("Não foi possível enviar a denúncia agora. Verifique sua conexão e tente novamente."); return; }
-      submission = data[0] as Result;
+      const response = await fetch("/api/public/reports/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: form.category,
+          description: form.description.trim(),
+          urgency: form.urgency,
+          address: address || null,
+          neighborhood: form.district.trim() || null,
+          referencePoint: form.reference.trim() || null,
+          latitude: form.latitude,
+          longitude: form.longitude,
+          eventAt,
+          trackingPin: form.trackingPin,
+          reporterName: form.wantsIdentification ? form.reporterName.trim() || null : null,
+          reporterPhone: form.wantsIdentification ? form.reporterPhone.trim() || null : null,
+          reporterEmail: form.wantsIdentification ? form.reporterEmail.trim() || null : null,
+          website: "",
+        }),
+      });
+      const data = await response.json() as Result & { error?: string };
+      if (!response.ok || !data.protocol || !data.upload_token) { setSubmitting(false); setError(data.error || "Não foi possível enviar a denúncia agora. Verifique sua conexão e tente novamente."); return; }
+      submission = data as Result;
       setPendingSubmission(submission);
     }
     const allImagesUploaded = await uploadFiles(submission);
