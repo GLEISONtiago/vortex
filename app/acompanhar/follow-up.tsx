@@ -62,7 +62,7 @@ export function FollowUp() {
   const refreshMessages = async () => { if (!result) return; const refreshed=await createClient().rpc("vortex_get_public_report_by_protocol_pin",{p_protocol:protocol.trim(),p_tracking_pin:pin}); if(refreshed.data?.[0]) setResult(refreshed.data[0] as PublicReport); };
 
   useEffect(() => {
-    if (!result?.protocol || !protocol.trim() || !/^[0-9]{6}$/.test(pin)) return;
+    if (!result?.protocol || result.status === "FINALIZADA" || !protocol.trim() || !/^[0-9]{6}$/.test(pin)) return;
     const timer = window.setInterval(async () => {
       if (document.visibilityState !== "visible") return;
       const refreshed = await createClient().rpc("vortex_get_public_report_by_protocol_pin", {
@@ -72,7 +72,7 @@ export function FollowUp() {
       if (refreshed.data?.[0]) setResult(refreshed.data[0] as PublicReport);
     }, 10000);
     return () => window.clearInterval(timer);
-  }, [result?.protocol, protocol, pin]);
+  }, [result?.protocol, result?.status, protocol, pin]);
   const sendReply = async () => {
     if (!result || result.status === "FINALIZADA" || reply.trim().length < 2) return;
     setSending(true); setMessageError("");
