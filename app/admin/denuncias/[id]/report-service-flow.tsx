@@ -5,9 +5,9 @@ type Stage="TRIAGE"|"WAITING_ASSIGNMENT"|"ASSIGNMENT"|"HANDLING"|"FINALIZED";
 const stages=["Triagem","Atribuição","Atendimento","Finalização"];
 
 export function ReportServiceFlow({
- protocol,statusLabel,stage,overview,routing,handling,communication,finalization,history,alerts=[],unitName
+ protocol,statusLabel,stage,overview,routing,handling,communication,finalization,history,alerts=[],unitName,awaitingReporterInfo=false,latestReporterReply=false
 }:{
- protocol:string;statusLabel:string;stage:Stage;overview:ReactNode;routing:ReactNode;handling:ReactNode;communication:ReactNode;finalization:ReactNode;history:ReactNode;alerts?:string[];unitName?:string|null;
+ protocol:string;statusLabel:string;stage:Stage;overview:ReactNode;routing:ReactNode;handling:ReactNode;communication:ReactNode;finalization:ReactNode;history:ReactNode;alerts?:string[];unitName?:string|null;awaitingReporterInfo?:boolean;latestReporterReply?:boolean;
 }){
  const currentIndex=stage==="TRIAGE"?0:stage==="WAITING_ASSIGNMENT"||stage==="ASSIGNMENT"?1:stage==="HANDLING"?2:3;
  return <div className="mx-auto max-w-5xl">
@@ -25,9 +25,18 @@ export function ReportServiceFlow({
   <ol className="mt-6 grid grid-cols-4 gap-1">{stages.map((label,index)=><li key={label}><div className={`h-1.5 rounded-full ${index<currentIndex||stage==="FINALIZED"?"bg-emerald-500":index===currentIndex?"bg-[#0c766d]":"bg-slate-200"}`}/><span className={`mt-2 hidden text-xs sm:block ${index===currentIndex?"font-bold text-[#0c766d]":"text-slate-500"}`}>{index<currentIndex||stage==="FINALIZED"?"✓ ":""}{label}</span></li>)}</ol>
 
   {stage==="TRIAGE"&&<main className="mt-8">
-   <SectionTitle eyebrow="1 · CONFERIR" title="Revise os dados e encaminhe"/>
-   {overview}
-   <div className="mt-6"><SectionTitle eyebrow="PRÓXIMA AÇÃO" title="Classificar e encaminhar"/>{routing}</div>
+   {awaitingReporterInfo?<>
+    <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:p-7"><p className="text-xs font-black uppercase tracking-[.14em] text-amber-700">Triagem pausada</p><h2 className="mt-2 text-xl font-black text-amber-950">Aguardando complemento do denunciante</h2><p className="mt-2 text-sm leading-6 text-amber-900">A solicitação já foi enviada. Quando o denunciante responder, esta marcação será retirada automaticamente e a triagem voltará a pedir uma decisão.</p></section>
+    <details className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm"><summary className="cursor-pointer px-5 py-4 font-bold text-[#102b42] sm:px-6">Ver dados da denúncia</summary><div className="border-t border-slate-200 p-5 sm:p-6">{overview}</div></details>
+    <details className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm"><summary className="cursor-pointer px-5 py-4 font-bold text-[#102b42] sm:px-6">Enviar nova mensagem ao denunciante</summary><div className="border-t border-slate-200 p-5 sm:p-6">{communication}</div></details>
+    <details className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm"><summary className="cursor-pointer px-5 py-4 font-bold text-[#102b42] sm:px-6">Encaminhar mesmo sem o complemento</summary><div className="border-t border-slate-200 p-5 sm:p-6">{routing}</div></details>
+   </>:<>
+    {latestReporterReply&&<section className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 p-5"><p className="text-xs font-black uppercase tracking-[.14em] text-blue-700">Complemento recebido</p><p className="mt-2 text-sm leading-6 text-blue-900">O denunciante respondeu à solicitação. Revise as novas informações no histórico e conclua a triagem.</p></section>}
+    <SectionTitle eyebrow="1 · CONFERIR" title="Revise os dados da denúncia"/>
+    {overview}
+    <div className="mt-6"><SectionTitle eyebrow="DECISÃO DA TRIAGEM" title="Classificar e encaminhar"/>{routing}</div>
+    <details className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm"><summary className="cursor-pointer px-5 py-4 font-bold text-[#102b42] sm:px-6">Faltam informações? Solicitar complemento</summary><div className="border-t border-slate-200 p-5 sm:p-6">{communication}</div></details>
+   </>}
   </main>}
 
   {stage==="WAITING_ASSIGNMENT"&&<main className="mt-8">
