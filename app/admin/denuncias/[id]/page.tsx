@@ -29,7 +29,7 @@ export default async function ReportDetail({params}:{params:Promise<{id:string}>
  const role=me?.role||"";
  const isAssignedToMe=Boolean(userId&&assignment?.assigned_to===userId);
  const canManage=role==="COORDENADOR";
- const canRoute=role==="DIRETORIA";
+ const canRoute=["ADMIN","DIRETORIA"].includes(role);
  const canReturn=role==="COORDENADOR";
  const canUpdateStatus=role==="COORDENADOR"||(["OPERADOR","AGENTE","ANALISTA"].includes(role)&&isAssignedToMe);
  const canFinalize=canUpdateStatus;
