@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "../../../../../lib/supabase/admin";
+import { consumePublicRateLimit } from "../../../../../lib/security/public-rate-limit";
 export const runtime = "nodejs";
 
 type Body = {
@@ -11,6 +12,9 @@ type Body = {
 const textOrNull=(v:unknown,max:number)=>typeof v==="string"&&v.trim()?v.trim().slice(0,max):null;
 
 export async function POST(request:Request){
+  const allowed=await consumePublicRateLimit(request,"report-submit",20,3600);
+  if(allowed===false) return NextResponse.json({error:"Muitas tentativas. Aguarde e tente novamente."},{status:429});
+  if(allowed===null) return NextResponse.json({error:"Serviço temporariamente indisponível."},{status:503});
   let b:Body; try{b=await request.json();}catch{return NextResponse.json({error:"Solicitação inválida."},{status:400});}
   if(typeof b.website==="string"&&b.website.trim()) return NextResponse.json({error:"Solicitação inválida."},{status:400});
   if(typeof b.category!=="string"||!b.category.trim()||typeof b.description!=="string"||b.description.trim().length<10||b.description.trim().length>5000)
