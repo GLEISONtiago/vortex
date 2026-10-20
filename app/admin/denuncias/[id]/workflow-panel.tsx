@@ -39,6 +39,8 @@ export function WorkflowPanel({
    {label:"Em atendimento",text:"Sua denúncia está em atendimento pela equipe responsável. Novas informações poderão ser registradas por este canal de acompanhamento.",wait:false}
  ],[unitName,contextSuggestions]);
 
+ if(mode==="message"&&currentStatus==="FINALIZADA")return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7"><h3 className="font-bold text-[#102b42]">Comunicação encerrada</h3><p className="mt-3 rounded-lg bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">A denúncia foi finalizada. A mensagem de encerramento já foi disponibilizada ao denunciante e a conversa permanece somente para consulta no histórico.</p></section>;
+
  if(mode==="message")return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
   <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-bold text-[#102b42]">Dar retorno ao denunciante</h3><p className="mt-1 text-sm leading-6 text-slate-500">Escolha uma sugestão ou escreva uma mensagem. O texto só é enviado depois da sua confirmação.</p></div>{latestReporterReply&&<span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">Nova resposta do denunciante</span>}</div>
   {awaitingReporterInfo&&<p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm font-semibold text-amber-900">Esta denúncia está marcada como aguardando complemento do denunciante.</p>}
