@@ -53,8 +53,8 @@ export default async function ReportDetail({params}:{params:Promise<{id:string}>
  const contextualMessage=missing.length?`Para dar continuidade à análise, precisamos de ${joinNatural(missing)}. Você pode responder por este acompanhamento com as informações que tiver disponíveis.`:"Caso possua alguma informação nova que possa auxiliar a averiguação, você pode enviá-la por este acompanhamento.";
  const alerts:string[]=[];
  if(report.awaiting_reporter_info)alerts.push("Aguardando complemento do denunciante. O indicador será retirado automaticamente quando houver nova resposta.");
- if(latestReporterReply)alerts.push("Nova resposta do denunciante recebida. Revise a etapa Comunicação.");
- if(!report.operational_priority&&canRoute)alerts.push("A prioridade operacional ainda não foi definida pela Diretoria.");
+ if(latestReporterReply&&stage!=="TRIAGE")alerts.push("Nova resposta do denunciante recebida. Revise a comunicação antes de continuar.");
+ if(!report.operational_priority&&canRoute&&!report.awaiting_reporter_info)alerts.push("A prioridade operacional ainda não foi definida pela triagem.");
  const priorityLabel=report.operational_priority?urgencyLabel(report.operational_priority):"Não definida";
 
  const overview=<section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
