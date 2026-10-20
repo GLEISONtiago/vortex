@@ -5,8 +5,11 @@ import { createClient } from "../../../lib/supabase/server";
 export async function triageReport(formData: FormData) {
  const reportId=String(formData.get("reportId")??"");
  const unitId=String(formData.get("unitId")??"");
- if(!/^[0-9a-f-]{36}$/i.test(reportId)||!/^[0-9a-f-]{36}$/i.test(unitId)) return;
+ const priority=String(formData.get("priority")??"");
+ if(!/^[0-9a-f-]{36}$/i.test(reportId)||!/^[0-9a-f-]{36}$/i.test(unitId)||!["LOW","MEDIUM","HIGH"].includes(priority)) return;
  const supabase=await createClient();
+ const {error:priorityError}=await supabase.rpc("vortex_set_operational_priority",{p_report_id:reportId,p_priority:priority});
+ if(priorityError) return;
  const {error}=await supabase.rpc("vortex_route_report",{p_report_id:reportId,p_unit_id:unitId});
  if(error) return;
  revalidatePath("/admin/triagem");
