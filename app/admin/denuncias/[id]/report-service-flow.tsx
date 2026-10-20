@@ -23,13 +23,13 @@ export function ReportServiceFlow({
    </div>
   </section>
   {alerts.length>0&&<div className="mt-5 grid gap-2">{alerts.map(alert=><p key={alert} className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">{alert}</p>)}</div>}
-  <Progress step={step} completed={completed}/>
+  <Progress step={step} completed={completed} onSelect={setStep}/>
   <div className="mt-8">
    <div className="mb-4 border-l-4 border-[#0c766d] pl-4"><p className="text-[10px] font-black tracking-[.16em] text-slate-500">ETAPA OPERACIONAL {step+1} DE {labels.length}</p><h2 className="mt-1 text-2xl font-black text-[#102b42]">{labels[step]}</h2></div>
    {contents[step]}
    <div className="mt-6 flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-between">
     <button type="button" onClick={()=>setStep(s=>Math.max(0,s-1))} disabled={step===0} className="min-h-11 px-4 text-sm font-semibold text-slate-700 disabled:opacity-30">Voltar</button>
-    {step<labels.length-1?<button type="button" onClick={()=>setStep(s=>Math.min(labels.length-1,s+1))} className="min-h-11 rounded-lg bg-[#0c766d] px-5 text-sm font-bold text-white">Continuar</button>:<button type="button" onClick={()=>setStep(0)} className="min-h-11 rounded-lg border border-[#0c766d] px-5 text-sm font-bold text-[#0c766d]">Revisar atendimento</button>}
+    {step<labels.length-1?<button type="button" onClick={()=>setStep(s=>Math.min(labels.length-1,s+1))} className="min-h-11 rounded-lg bg-[#0c766d] px-5 text-sm font-bold text-white">Próxima seção: {labels[step+1]}</button>:<button type="button" onClick={()=>setStep(1)} className="min-h-11 rounded-lg border border-[#0c766d] px-5 text-sm font-bold text-[#0c766d]">Ir para encaminhamento</button>}
    </div>
   </div>
   <details id="historico-atendimento" className="mt-8 scroll-mt-24 rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -39,6 +39,6 @@ export function ReportServiceFlow({
  </div>;
 }
 
-function Progress({step,completed}:{step:number;completed:boolean[]}){
- return <ol className="mt-8 grid grid-cols-5 gap-1">{labels.map((label,index)=><li key={label}><div className={`h-1.5 rounded-full ${completed[index]?"bg-emerald-500":index<=step?"bg-[#0c766d]":"bg-slate-200"}`}/><span className={`mt-2 hidden items-center gap-1 text-xs sm:flex ${index===step?"font-bold text-[#0c766d]":"text-slate-500"}`}>{completed[index]&&<b className="text-emerald-600">✓</b>}{index+1}. {label}</span></li>)}</ol>;
+function Progress({step,completed,onSelect}:{step:number;completed:boolean[];onSelect:(step:number)=>void}){
+ return <ol className="mt-8 grid grid-cols-5 gap-1">{labels.map((label,index)=><li key={label}><button type="button" onClick={()=>onSelect(index)} aria-current={index===step?"step":undefined} className="w-full text-left" title={`Abrir ${label}`}><div className={`h-1.5 rounded-full ${completed[index]?"bg-emerald-500":index<=step?"bg-[#0c766d]":"bg-slate-200"}`}/><span className={`mt-2 hidden items-center gap-1 text-xs sm:flex ${index===step?"font-bold text-[#0c766d]":"text-slate-500"}`}>{completed[index]&&<b className="text-emerald-600">✓</b>}{index+1}. {label}</span></button></li>)}</ol>;
 }
