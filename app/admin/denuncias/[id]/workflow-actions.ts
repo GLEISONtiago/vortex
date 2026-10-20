@@ -47,7 +47,8 @@ export async function addInternalNote(reportId: string, note: string) {
 export async function sendReporterMessage(reportId: string, message: string, waitForReply = false) {
   const clean = message.trim(); if (clean.length < 2) return { error: "Digite uma mensagem." };
   const ctx = await context(reportId); if ("error" in ctx) return { error: ctx.error };
-  const { supabase } = ctx;
+  const { supabase, report } = ctx;
+  if (report!.status === "FINALIZADA") return { error: "Esta denúncia já foi finalizada. A conversa está disponível somente para consulta." };
   const { error } = await supabase.rpc("vortex_send_staff_message", { p_report_id: reportId, p_message: clean });
   if (error) return { error: "Não foi possível enviar a mensagem." };
   if (waitForReply) {
