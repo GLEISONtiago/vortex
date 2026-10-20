@@ -50,8 +50,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     <div className="mx-auto w-full max-w-[1600px] md:grid md:grid-cols-[15rem_minmax(0,1fr)]">
       <aside className="bg-[#0b2a43] text-white md:min-h-[calc(100vh-69px)]">
         <div className="border-b border-white/10 px-5 py-5">
-          <p className="text-[10px] font-black tracking-[.18em] text-[#74d5c9]">VÓRTEX OPERACIONAL</p>
-          <p className="mt-2 text-sm leading-5 text-slate-300">Ambiente interno de triagem, despacho e acompanhamento.</p>
+          <p className="text-[10px] font-black tracking-[.18em] text-[#74d5c9]">CENTRAL OPERACIONAL</p>
+          <p className="mt-2 text-sm leading-5 text-slate-300">Triagem, encaminhamento e atendimento de denúncias.</p>
         </div>
         <nav className="flex gap-1 overflow-x-auto p-2 md:flex-col md:overflow-visible md:p-3">
           <Link className={navClass} href="/admin"><span>Painel operacional</span></Link>
@@ -61,10 +61,10 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           {profile.role==="ADMIN"&&<>
             <div className="mx-3 my-2 hidden border-t border-white/10 md:block"/>
             <p className="hidden px-4 pb-1 pt-2 text-[10px] font-black tracking-[.15em] text-slate-400 md:block">ADMINISTRAÇÃO</p>
-            <Link className={navClass} href="/admin/publicacoes"><span>Publicações</span></Link>
+            <Link className={navClass} href="/admin/publicacoes"><span>Conteúdo público</span></Link>
             <Link className={navClass} href="/admin/grupamentos"><span>Grupamentos</span></Link>
-            <Link className={navClass} href="/admin/usuarios"><span>Usuários</span></Link>
-            <Link className={navClass} href="/admin/administracao"><span>Administração</span></Link>
+            <Link className={navClass} href="/admin/usuarios"><span>Usuários e acessos</span></Link>
+            <Link className={navClass} href="/admin/administracao"><span>Configurações</span></Link>
             <Link className={navClass} href="/admin/auditoria"><span>Auditoria</span></Link>
             <Link className={navClass} href="/admin/backup"><span>Backup e armazenamento</span></Link>
           </>}
