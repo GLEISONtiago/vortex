@@ -54,9 +54,10 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           <p className="mt-2 text-sm leading-5 text-slate-300">Triagem, encaminhamento e atendimento de denúncias.</p>
         </div>
         <nav className="flex gap-1 overflow-x-auto p-2 md:flex-col md:overflow-visible md:p-3">
-          <Link className={navClass} href="/admin"><span>Painel operacional</span></Link>
-          <Link className={navClass} href="/admin/denuncias"><span>Denúncias</span></Link>
-          {profile.role==="DIRETORIA"&&<Link className={navClass} href="/admin/triagem"><span>Triagem geral</span></Link>}
+          <p className="hidden px-4 pb-1 pt-1 text-[10px] font-black tracking-[.15em] text-slate-400 md:block">OPERAÇÃO</p>
+          <Link className={navClass} href="/admin"><span>Visão geral</span></Link>
+          {["ADMIN","DIRETORIA"].includes(profile.role)&&<Link className={navClass} href="/admin/triagem"><span>Triagem</span></Link>}
+          <Link className={navClass} href="/admin/denuncias"><span>Central de denúncias</span></Link>
           <Link className={navClass} href="/admin/notificacoes"><span>Notificações</span>{(unreadNotifications??0)>0&&<span className="grid min-w-6 place-items-center rounded-full bg-[#e7b548] px-1.5 py-0.5 text-[10px] font-black text-[#102b42]">{unreadNotifications}</span>}</Link>
           {profile.role==="ADMIN"&&<>
             <div className="mx-3 my-2 hidden border-t border-white/10 md:block"/>
