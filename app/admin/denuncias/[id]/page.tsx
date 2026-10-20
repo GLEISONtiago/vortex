@@ -40,15 +40,11 @@ export default async function ReportDetail({params}:{params:Promise<{id:string}>
  const lastStaff=staffMessages.at(-1);
  const lastReporter=reporterMessages.at(-1);
  const latestReporterReply=Boolean(lastReporter&&(!lastStaff||new Date(lastReporter.created_at).getTime()>new Date(lastStaff.created_at).getTime()));
- const hasServiceNote=(history??[]).some(item=>item.old_status===item.new_status&&Boolean(item.note));
- const routingComplete=role==="DIRETORIA"?Boolean(report.unit_id):role==="COORDENADOR"?Boolean(assignment):Boolean(assignment||report.unit_id);
- const completed=[true,routingComplete,report.status==="FINALIZADA"||hasServiceNote,staffMessages.length>0,report.status==="FINALIZADA"];
- let initialStep=0;
- if(report.status==="FINALIZADA")initialStep=4;
- else if(latestReporterReply||report.awaiting_reporter_info)initialStep=3;
- else if(!report.unit_id)initialStep=canRoute?1:0;
- else if(!assignment)initialStep=canManage?1:0;
- else initialStep=2;
+ let stage:"TRIAGE"|"WAITING_ASSIGNMENT"|"ASSIGNMENT"|"HANDLING"|"FINALIZED";
+ if(report.status==="FINALIZADA")stage="FINALIZED";
+ else if(!report.unit_id)stage="TRIAGE";
+ else if(!assignment)stage=canManage?"ASSIGNMENT":"WAITING_ASSIGNMENT";
+ else stage="HANDLING";
  const missing:string[]=[];
  if(!report.reference_point)missing.push("um ponto de referência");
  if(report.latitude==null||report.longitude==null)missing.push("a confirmação mais precisa do local");
@@ -82,7 +78,7 @@ export default async function ReportDetail({params}:{params:Promise<{id:string}>
   <Card title="Comunicações">{allMessages.length?<ul className="grid gap-3">{allMessages.map(message=><li key={message.id} className={`rounded-xl p-3 text-sm ${message.sender_type==="STAFF"?"bg-[#eef9f7]":message.sender_type==="SYSTEM"?"bg-slate-100":"bg-blue-50"}`}><p className="text-xs font-bold text-slate-500">{message.sender_type==="STAFF"?"Equipe Vórtex":message.sender_type==="REPORTER"?"Denunciante":"Sistema"}</p><p className="mt-1 whitespace-pre-wrap">{message.message}</p>{message.created_at&&<p className="mt-2 text-xs text-slate-400">{formatDateTime(message.created_at)}</p>}</li>)}</ul>:<p className="text-sm text-slate-600">Nenhuma mensagem disponível.</p>}</Card>
  </section>;
 
- return <><Link href="/admin/denuncias" className="text-sm font-bold text-[#0c766d]">← Denúncias</Link><ReportServiceFlow protocol={report.protocol} statusLabel={statusLabel(report.status)} overview={overview} routing={routing} handling={handling} communication={communication} finalization={finalization} history={historyContent} initialStep={initialStep} completed={completed} alerts={alerts}/></>;
+ return <><Link href="/admin/denuncias" className="text-sm font-bold text-[#0c766d]">← Denúncias</Link><ReportServiceFlow protocol={report.protocol} statusLabel={statusLabel(report.status)} stage={stage} overview={overview} routing={routing} handling={handling} communication={communication} finalization={finalization} history={historyContent} alerts={alerts} unitName={unit?.name||null}/></>;
 }
 function Card({title,children}:{title:string;children:ReactNode}){return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><h3 className="font-bold text-[#102b42]">{title}</h3><div className="mt-4">{children}</div></section>;}
 function Item({label,value}:{label:string;value:string}){return <p><span className="text-slate-500">{label}: </span><b>{value}</b></p>;}
