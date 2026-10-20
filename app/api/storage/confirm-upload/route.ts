@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { consumePublicRateLimit } from "../../../../lib/security/public-rate-limit";
 import { createAdminClient } from "../../../../lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -6,6 +7,9 @@ export const runtime = "nodejs";
 const attachmentBucket = "vortex-attachments";
 
 export async function POST(request: Request) {
+  const allowed = await consumePublicRateLimit(request, "attachment-confirm", 60, 60);
+  if (allowed === false) return NextResponse.json({ error: "Muitas tentativas. Aguarde e tente novamente." }, { status: 429 });
+  if (allowed === null) return NextResponse.json({ error: "Serviço temporariamente indisponível." }, { status: 503 });
   let body: { uploadToken?: unknown; attachmentToken?: unknown };
 
   try {
