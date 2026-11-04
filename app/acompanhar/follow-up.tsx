@@ -136,7 +136,7 @@ export function FollowUp() {
             </div>
             {error && <p role="alert" className="mt-5 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>}
             <button type="submit" disabled={loading} className="mt-6 min-h-11 w-full rounded-lg bg-[#0c766d] px-5 text-sm font-bold text-white hover:bg-[#095f58] disabled:cursor-not-allowed disabled:opacity-60">{loading ? "Consultando..." : "Consultar"}</button>
-            <p className="mt-4 flex gap-2 text-xs leading-5 text-slate-500"><Shield /> O PIN protege o acesso ao acompanhamento da sua denúncia.</p>
+            <p className="mt-4 flex gap-2 text-xs leading-5 text-slate-500"><Shield /> O PIN protege o acesso ao acompanhamento da sua denúncia.</p><p className="mt-3 text-xs leading-5 text-slate-500">Saiba como tratamos os dados no <Link href="/privacidade" className="font-semibold text-[#0c766d] underline underline-offset-2">aviso de privacidade</Link>.</p>
           </form>
           <div>{result ? <Result report={result} reply={reply} setReply={setReply} sending={sending} sendReply={sendReply} refreshMessages={refreshMessages} messageError={messageError} messageSuccess={messageSuccess} clearMessageSuccess={()=>setMessageSuccess("")} /> : <EmptyState />}</div>
         </div>
