@@ -9,7 +9,7 @@ const searchCache = new Map<string, { point: Point; expires: number }>();
 const CACHE_MS = 4 * 60 * 60 * 1000;
 
 export async function GET(request: Request) {
-  const query = new URL(request.url).searchParams.get("q")?.trim().replace(/\\s+/g, " ") || "";
+  const query = new URL(request.url).searchParams.get("q")?.trim().replace(/\s+/g, " ") || "";
   if (query.length < 5 || query.length > 300) {
     return NextResponse.json({ error: "Endereço inválido." }, { status: 400 });
   }
