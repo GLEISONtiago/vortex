@@ -4,12 +4,25 @@ import L from "leaflet";
 import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
 
 const center: [number, number] = [-7.1195, -34.845];
+// The default map is provided on a best-effort basis by OpenStreetMap.
+// A managed tile provider can be configured for institutional operation.
+// Both values are public, browser-safe settings; never put a secret API key here.
+const providerUrl = process.env.NEXT_PUBLIC_VORTEX_MAP_TILE_URL?.trim() || "";
+const providerAttribution = process.env.NEXT_PUBLIC_VORTEX_MAP_ATTRIBUTION?.trim() || "";
+const hasCustomProvider = providerUrl.startsWith("https://")
+  && ["{z}", "{x}", "{y}"].every(part => providerUrl.includes(part))
+  && providerAttribution.length > 0;
+const tilesUrl = hasCustomProvider ? providerUrl : "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const tilesAttribution = hasCustomProvider
+  ? providerAttribution
+  : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
+
+// Embedded marker: the location selector remains usable without third-party icon CDNs.
+const markerSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="42" viewBox="0 0 28 42"><path d="M14 1C6.82 1 1 6.82 1 14c0 10 13 26 13 26s13-16 13-26C27 6.82 21.18 1 14 1z" fill="#0c766d" stroke="#ffffff" stroke-width="2"/><circle cx="14" cy="14" r="5.5" fill="#ffffff"/></svg>';
 const icon = L.icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
+  iconUrl: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(markerSvg)}`,
+  iconSize: [28, 42],
+  iconAnchor: [14, 41],
 });
 
 function ClickHandler({ onChange }: { onChange: (lat: number, lng: number) => void }) {
@@ -39,13 +52,15 @@ export function LocationMap({
   const mapUnavailable = tileErrors >= 3;
 
   return <div className="relative mt-3 h-[340px] overflow-hidden rounded-xl border border-slate-200">
-    <MapContainer center={center} zoom={12} className="h-full w-full" scrollWheelZoom>
+    <MapContainer center={center} zoom={12} minZoom={10} maxZoom={19} className="h-full w-full" scrollWheelZoom>
       <TileLayer
         key={retryCount}
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
-        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution={tilesAttribution}
+        url={tilesUrl}
+        keepBuffer={1}
         eventHandlers={{
           tileerror: () => setTileErrors((current) => Math.min(3, current + 1)),
+          tileload: () => setTileErrors(0),
         }}
       />
       <ClickHandler onChange={onChange} />
