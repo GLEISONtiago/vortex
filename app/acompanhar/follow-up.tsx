@@ -24,12 +24,18 @@ const statusLabels: Record<PublicReport["status"], string> = {
 };
 
 async function fetchPublicReport(protocol:string,pin:string){
-  const response=await fetch("/api/public/reports/lookup",{
-    method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({protocol:protocol.trim(),pin}),
-  });
-  if(!response.ok)return null;
-  return await response.json() as PublicReport;
+  try {
+    const response=await fetch("/api/public/reports/lookup",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      cache:"no-store",
+      body:JSON.stringify({protocol:protocol.trim(),pin}),
+    });
+    if(!response.ok)return null;
+    return await response.json() as PublicReport;
+  } catch {
+    // Network outages should not interrupt the user's page or polling interval.
+    return null;
+  }
 }
 
 export function FollowUp() {
