@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { BrandMark } from "../components/brand-mark";
 
 export const metadata = {
@@ -86,7 +87,7 @@ export default function PrivacidadePage() {
   </main>;
 }
 
-function InfoSection({title,children}:{title:string;children:React.ReactNode}) {
+function InfoSection({title,children}:{title:string;children:ReactNode}) {
   return <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
     <h2 className="text-lg font-bold text-[#102b42]">{title}</h2>
     <div className="mt-3 space-y-3 text-sm leading-7 text-slate-700">{children}</div>
