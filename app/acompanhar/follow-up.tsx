@@ -9,7 +9,7 @@ const fieldClass = "mt-2 w-full rounded-lg border border-slate-300 bg-white px-3
 
 type PublicReport = {
   protocol: string;
-  status: "NOVA" | "EM_ANALISE" | "EM_ATENDIMENTO" | "FINALIZADA";
+  status: "NOVA" | "ENCAMINHADA" | "EM_ANALISE" | "EM_ATENDIMENTO" | "FINALIZADA";
   resolution?: string | null;
   created_at: string;
   messages: Array<{ id: string; sender_type: "STAFF"|"REPORTER"|"SYSTEM"; message: string; created_at: string }>;
@@ -17,6 +17,7 @@ type PublicReport = {
 
 const statusLabels: Record<PublicReport["status"], string> = {
   NOVA: "Nova",
+  ENCAMINHADA: "Encaminhada ao grupamento",
   EM_ANALISE: "Em análise",
   EM_ATENDIMENTO: "Em atendimento",
   FINALIZADA: "Finalizada",
@@ -58,12 +59,28 @@ export function FollowUp() {
 
   useEffect(() => {
     if (!result?.protocol || result.status === "FINALIZADA" || !protocol.trim() || !/^[0-9]{6}$/.test(pin)) return;
-    const timer = window.setInterval(async () => {
-      if (document.visibilityState !== "visible") return;
-      const refreshed=await fetchPublicReport(protocol,pin);
-      if(refreshed) setResult(refreshed);
-    }, 10000);
-    return () => window.clearInterval(timer);
+    let active = true;
+    let inFlight = false;
+    const refresh = async () => {
+      if (!active || inFlight || document.visibilityState !== "visible") return;
+      inFlight = true;
+      try {
+        const refreshed = await fetchPublicReport(protocol, pin);
+        if (active && refreshed) setResult(refreshed);
+      } finally {
+        inFlight = false;
+      }
+    };
+    // A consulta é protegida por limite de acesso. Evite sobrecarregar o serviço,
+    // especialmente quando vários cidadãos compartilham o mesmo IP.
+    const timer = window.setInterval(() => { void refresh(); }, 60000);
+    const onVisibility = () => { if (document.visibilityState === "visible") void refresh(); };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [result?.protocol, result?.status, protocol, pin]);
   const sendReply = async () => {
     if (!result || result.status === "FINALIZADA" || reply.trim().length < 2) return;
@@ -121,13 +138,13 @@ function EmptyState() {
 function Result({ report, reply, setReply, sending, sendReply, refreshMessages, messageError }: { report: PublicReport; reply:string; setReply:(v:string)=>void; sending:boolean; sendReply:()=>void; refreshMessages:()=>void; messageError:string }) {
  const createdAt=new Intl.DateTimeFormat("pt-BR",{dateStyle:"medium",timeStyle:"short"}).format(new Date(report.created_at));
  const resolutionLabels:Record<string,string>={PROCEDENTE:"Procedente",IMPROCEDENTE:"Improcedente",RESOLVIDA:"Resolvida",ENCAMINHADA_OUTRO_ORGAO:"Encaminhada a outro órgão",NAO_FOI_POSSIVEL_AVERIGUAR:"Não foi possível averiguar"};
- const steps=["NOVA","EM_ANALISE","EM_ATENDIMENTO","FINALIZADA"]; const current=Math.max(0,steps.indexOf(report.status));
+ const steps=["NOVA","ENCAMINHADA","EM_ANALISE","EM_ATENDIMENTO","FINALIZADA"]; const current=Math.max(0,steps.indexOf(report.status));
  const chatEnd=useRef<HTMLDivElement>(null);
  useEffect(()=>{chatEnd.current?.scrollIntoView({behavior:"smooth",block:"nearest"});},[report.messages?.length]);
  return <section className="rounded-2xl border border-[#0c766d]/25 bg-white p-5 shadow-sm sm:p-7"><p className="text-xs font-bold tracking-[.14em] text-[#0c766d]">ACOMPANHAMENTO DA DENÚNCIA</p><h2 className="mt-2 text-xl font-bold">Registro {report.protocol}</h2>
- <div className="mt-6 grid grid-cols-4 gap-2">{steps.map((s,i)=><div key={s} className="text-center"><div className={`mx-auto size-3 rounded-full ${i<=current?"bg-[#0c766d]":"bg-slate-200"}`}/><div className={`mt-2 h-1 rounded ${i<=current?"bg-[#0c766d]":"bg-slate-200"}`}/><p className="mt-2 text-[11px] font-semibold text-slate-600">{statusLabels[s as PublicReport["status"]]}</p></div>)}</div>
+ <div className="mt-6 grid grid-cols-5 gap-1.5 sm:gap-2">{steps.map((s,i)=><div key={s} className="text-center"><div className={`mx-auto size-3 rounded-full ${i<=current?"bg-[#0c766d]":"bg-slate-200"}`}/><div className={`mt-2 h-1 rounded ${i<=current?"bg-[#0c766d]":"bg-slate-200"}`}/><p className="mt-2 text-[11px] font-semibold text-slate-600">{statusLabels[s as PublicReport["status"]]}</p></div>)}</div>
  <dl className="mt-6 grid gap-4 rounded-xl bg-slate-50 p-4 sm:grid-cols-2"><div><dt className="text-xs font-bold text-slate-500">STATUS ATUAL</dt><dd className="mt-1 font-bold text-[#0c766d]">{statusLabels[report.status]}</dd></div><div><dt className="text-xs font-bold text-slate-500">REGISTRADA EM</dt><dd className="mt-1 font-semibold text-slate-700">{createdAt}</dd></div>{report.status==="FINALIZADA"&&report.resolution&&<div className="sm:col-span-2"><dt className="text-xs font-bold text-slate-500">RESULTADO</dt><dd className="mt-1 font-semibold">{resolutionLabels[report.resolution]||report.resolution}</dd></div>}</dl>
- <div className="mt-6"><div className="flex items-center justify-between gap-3"><div><h3 className="font-bold">Conversa com a equipe</h3><p className="mt-1 text-xs text-slate-500">{report.status==="FINALIZADA"?"O atendimento foi encerrado. O histórico da conversa permanece disponível para consulta.":"Use este espaço para complementar informações sobre a denúncia. Novas respostas aparecem automaticamente."}</p></div><button type="button" onClick={refreshMessages} className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-slate-600">Atualizar</button></div>
+ <div className="mt-6"><div className="flex items-center justify-between gap-3"><div><h3 className="font-bold">Conversa com a equipe</h3><p className="mt-1 text-xs text-slate-500">{report.status==="FINALIZADA"?"O atendimento foi encerrado. O histórico da conversa permanece disponível para consulta.":"Use este espaço para complementar informações sobre a denúncia. Atualizações automáticas a cada minuto enquanto esta página estiver aberta."}</p></div><button type="button" onClick={refreshMessages} className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-slate-600">Atualizar</button></div>
  <div className="mt-4 max-h-[420px] overflow-y-auto rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200">{report.messages?.length?<div className="grid gap-3">{report.messages.map(m=><div key={m.id} className={`max-w-[88%] rounded-2xl px-4 py-3 text-sm ${m.sender_type==="REPORTER"?"ml-auto rounded-br-sm bg-[#d8f1ed]":"mr-auto rounded-bl-sm bg-white ring-1 ring-slate-200"}`}><p className="text-[11px] font-bold text-slate-500">{m.sender_type==="REPORTER"?"Você":m.sender_type==="STAFF"?"Equipe Vórtex":"Sistema"}</p><p className="mt-1 whitespace-pre-wrap leading-5">{m.message}</p><p className="mt-2 text-[10px] text-slate-400">{new Date(m.created_at).toLocaleString("pt-BR")}</p></div>)}<div ref={chatEnd}/></div>:<p className="py-8 text-center text-sm text-slate-500">Ainda não há mensagens. Você pode iniciar a conversa abaixo.</p>}</div></div>
  {report.status==="FINALIZADA"?<div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><p className="text-sm font-bold text-emerald-900">Atendimento encerrado</p><p className="mt-1 text-xs leading-5 text-emerald-800">A conversa foi encerrada com a finalização da denúncia. As mensagens anteriores continuam disponíveis acima para consulta.</p></div>:<div className="mt-4 rounded-xl border border-slate-200 p-3"><label className="text-sm font-bold">Nova mensagem</label><textarea value={reply} onChange={e=>setReply(e.target.value)} maxLength={2000} rows={3} className={fieldClass} placeholder="Digite uma nova informação para a equipe..." />{messageError&&<p role="alert" className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{messageError}</p>}<div className="mt-2 flex items-center justify-between gap-3"><span className="text-xs text-slate-400">{reply.length}/2000</span><button type="button" onClick={sendReply} disabled={sending||reply.trim().length<2} className="rounded-lg bg-[#102b42] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">{sending?"Enviando...":"Enviar"}</button></div></div>}
  </section>;
