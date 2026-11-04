@@ -4,8 +4,7 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
-  // Tile providers require a Referer; cross-origin requests disclose only the site origin.
-  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Referrer-Policy", value: "no-referrer" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), payment=(), usb=(), browsing-topics=()" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
@@ -15,7 +14,11 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/(.*)", headers: securityHeaders },
-      { source: "/denuncia/:path*", headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }] },
+      { source: "/denuncia/:path*", headers: [
+        { key: "Cache-Control", value: "no-store, max-age=0" },
+        // OSM tiles require the site origin in Referer; never expose the full path cross-origin.
+        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      ] },
       { source: "/acompanhar/:path*", headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }] },
       { source: "/admin/:path*", headers: [{ key: "Cache-Control", value: "private, no-store, max-age=0" }] },
     ];
